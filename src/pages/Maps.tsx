@@ -110,19 +110,30 @@ const Maps: React.FC = () => {
 
   // Initialize map
   useEffect(() => {
-    if (mapboxToken && mapContainer.current && !map.current) {
+    if (mapboxToken && mapboxToken !== 'your_mapbox_access_token_here' && mapContainer.current && !map.current) {
       mapboxgl.accessToken = mapboxToken;
       
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/satellite-v9',
-        center: [78.9629, 20.5937],
-        zoom: 5
-      });
+      try {
+        map.current = new mapboxgl.Map({
+          container: mapContainer.current,
+          style: 'mapbox://styles/mapbox/satellite-v9',
+          center: [78.9629, 20.5937],
+          zoom: 5
+        });
 
-      map.current.on('load', () => {
-        setMapLoaded(true);
-      });
+        map.current.on('load', () => {
+          setMapLoaded(true);
+          setError(null);
+        });
+
+        map.current.on('error', (e) => {
+          console.error('Mapbox error:', e);
+          setError('Failed to load map. Please check your internet connection and Mapbox token.');
+        });
+      } catch (err) {
+        console.error('Error initializing map:', err);
+        setError('Failed to initialize map. Please check your Mapbox token.');
+      }
     }
 
     return () => {
@@ -579,9 +590,15 @@ const Maps: React.FC = () => {
                     <div className="text-center">
                       <MapIcon className="h-16 w-16 text-blue-500 mx-auto mb-4" />
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">FRA Atlas WebGIS</h3>
-                      <p className="text-sm text-gray-500">
-                        Please add your Mapbox API key to .env file as VITE_MAPBOX_ACCESS_TOKEN
-                      </p>
+                      {!mapboxToken || mapboxToken === 'your_mapbox_access_token_here' ? (
+                        <p className="text-sm text-gray-500">
+                          Please add your Mapbox API key to .env file as VITE_MAPBOX_ACCESS_TOKEN
+                        </p>
+                      ) : (
+                        <p className="text-sm text-gray-500">
+                          Initializing map...
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
