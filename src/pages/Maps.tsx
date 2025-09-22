@@ -192,30 +192,24 @@ const Maps: React.FC = () => {
   }, [selectedState, selectedDistrict]);
 
   // Fetch GeoJSON data from Supabase storage
-  const fetchGeoJSON = useCallback(async (path: string) => {
+  const fetchGeoJSON = useCallback(async (path: string): Promise<{ data: any | null; error: string | null }> => {
     try {
-      setLoading(true);
-      setError(null);
-
       const { data, error } = await supabase.storage
         .from('maps-for-webgis')
         .download(path);
 
       if (error) {
-        throw new Error(`Failed to fetch GeoJSON: ${error.message}`);
+        return { data: null, error: `Failed to fetch GeoJSON: ${error.message}` };
       }
 
       const text = await data.text();
       const geoJson = JSON.parse(text);
       
-      return geoJson;
+      return { data: geoJson, error: null };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch GeoJSON data';
-      setError(errorMessage);
       console.error('Error fetching GeoJSON:', err);
-      return null;
-    } finally {
-      setLoading(false);
+      return { data: null, error: errorMessage };
     }
   }, []);
 
@@ -339,30 +333,36 @@ const Maps: React.FC = () => {
     
     for (let part = 1; part <= 10; part++) {
       const path = `LAND/${selectedState} ${selectedDistrict} ${selectedVillage} ${part}.geojson`;
-      const data = await fetchGeoJSON(path);
-      if (data) {
+      const result = await fetchGeoJSON(path);
+      if (result.data) {
         const layer = layers.find(l => l.id === `land-${part}`);
         if (layer) {
-          addGeoJSONLayer(data, `land-${part}`, layer.color, layer.visible);
+          addGeoJSONLayer(result.data, `land-${part}`, layer.color, layer.visible);
         }
+      } else if (result.error) {
+        // Log error but don't show it to user for optional land parts
+        console.warn(`Land part ${part} not found for ${selectedState} ${selectedDistrict} ${selectedVillage}:`, result.error);
       }
     }
   };
 
   // Handle state selection
   const handleStateChange = useCallback(async (state: string) => {
+    setLoading(true);
+    setError(null);
     setSelectedState(state);
     if (state) {
       const path = `STATE/${state}.geojson`;
-      const data = await fetchGeoJSON(path);
-      if (data) {
-        setGeoJsonData(data);
+      const result = await fetchGeoJSON(path);
+      if (result.data) {
+        setGeoJsonData(result.data);
         addGeoJSONLayer(data, 'administrative', '#3B82F6');
+        addGeoJSONLayer(result.data, 'administrative', '#3B82F6');
         
         // Fit bounds to the data
-        if (data.features && data.features.length > 0) {
+        if (result.data.features && result.data.features.length > 0) {
           const bounds = new mapboxgl.LngLatBounds();
-          data.features.forEach((feature: any) => {
+          result.data.features.forEach((feature: any) => {
             if (feature.geometry.type === 'Polygon') {
               feature.geometry.coordinates[0].forEach((coord: number[]) => {
                 bounds.extend([coord[0], coord[1]]);
@@ -373,6 +373,9 @@ const Maps: React.FC = () => {
             map.current?.fitBounds(bounds, { padding: 50 });
           }
         }
+      } else if (result.error) {
+        setError(result.error);
+        console.error('Error loading state data:', result.error);
       }
     } else {
       setGeoJsonData(null);
@@ -382,22 +385,25 @@ const Maps: React.FC = () => {
         map.current.removeSource('administrative');
       }
     }
+    setLoading(false);
   }, [fetchGeoJSON, addGeoJSONLayer]);
 
   // Handle district selection
   const handleDistrictChange = useCallback(async (district: string) => {
+    setLoading(true);
+    setError(null);
     setSelectedDistrict(district);
     if (selectedState && district) {
       const path = `DISTRICT/${selectedState} ${district}.geojson`;
-      const data = await fetchGeoJSON(path);
-      if (data) {
-        setGeoJsonData(data);
-        addGeoJSONLayer(data, 'administrative', '#3B82F6');
+      const result = await fetchGeoJSON(path);
+      if (result.data) {
+        setGeoJsonData(result.data);
+        addGeoJSONLayer(result.data, 'administrative', '#3B82F6');
         
         // Fit bounds to the data
-        if (data.features && data.features.length > 0) {
+        if (result.data.features && result.data.features.length > 0) {
           const bounds = new mapboxgl.LngLatBounds();
-          data.features.forEach((feature: any) => {
+          result.data.features.forEach((feature: any) => {
             if (feature.geometry.type === 'Polygon') {
               feature.geometry.coordinates[0].forEach((coord: number[]) => {
                 bounds.extend([coord[0], coord[1]]);
@@ -408,24 +414,30 @@ const Maps: React.FC = () => {
             map.current?.fitBounds(bounds, { padding: 50 });
           }
         }
+      } else if (result.error) {
+        setError(result.error);
+        console.error('Error loading district data:', result.error);
       }
     }
+    setLoading(false);
   }, [selectedState, fetchGeoJSON, addGeoJSONLayer]);
 
   // Handle village selection
   const handleVillageChange = useCallback(async (village: string) => {
+    setLoading(true);
+    setError(null);
     setSelectedVillage(village);
     if (selectedState && selectedDistrict && village) {
       const path = `VILLAGE/${selectedState} ${selectedDistrict} ${village}.geojson`;
-      const data = await fetchGeoJSON(path);
-      if (data) {
-        setGeoJsonData(data);
-        addGeoJSONLayer(data, 'administrative', '#3B82F6');
+      const result = await fetchGeoJSON(path);
+      if (result.data) {
+        setGeoJsonData(result.data);
+        addGeoJSONLayer(result.data, 'administrative', '#3B82F6');
         
         // Fit bounds to the data
-        if (data.features && data.features.length > 0) {
+        if (result.data.features && result.data.features.length > 0) {
           const bounds = new mapboxgl.LngLatBounds();
-          data.features.forEach((feature: any) => {
+          result.data.features.forEach((feature: any) => {
             if (feature.geometry.type === 'Polygon') {
               feature.geometry.coordinates[0].forEach((coord: number[]) => {
                 bounds.extend([coord[0], coord[1]]);
@@ -436,24 +448,30 @@ const Maps: React.FC = () => {
             map.current?.fitBounds(bounds, { padding: 50 });
           }
         }
+      } else if (result.error) {
+        setError(result.error);
+        console.error('Error loading village data:', result.error);
       }
     }
+    setLoading(false);
   }, [selectedState, selectedDistrict, fetchGeoJSON, addGeoJSONLayer]);
 
   // Handle forest selection
   const handleForestChange = useCallback(async (forest: string) => {
+    setLoading(true);
+    setError(null);
     setSelectedForest(forest);
     if (selectedState && forest) {
       const path = `FOREST/${selectedState} ${forest}.geojson`;
-      const data = await fetchGeoJSON(path);
-      if (data) {
-        setForestData(data);
-        addGeoJSONLayer(data, 'forest', '#10B981');
+      const result = await fetchGeoJSON(path);
+      if (result.data) {
+        setForestData(result.data);
+        addGeoJSONLayer(result.data, 'forest', '#10B981');
         
         // Fit bounds to the data
-        if (data.features && data.features.length > 0) {
+        if (result.data.features && result.data.features.length > 0) {
           const bounds = new mapboxgl.LngLatBounds();
-          data.features.forEach((feature: any) => {
+          result.data.features.forEach((feature: any) => {
             if (feature.geometry.type === 'Polygon') {
               feature.geometry.coordinates[0].forEach((coord: number[]) => {
                 bounds.extend([coord[0], coord[1]]);
@@ -464,8 +482,12 @@ const Maps: React.FC = () => {
             map.current?.fitBounds(bounds, { padding: 50 });
           }
         }
+      } else if (result.error) {
+        setError(result.error);
+        console.error('Error loading forest data:', result.error);
       }
     }
+    setLoading(false);
   }, [selectedState, fetchGeoJSON, addGeoJSONLayer]);
 
   // Toggle layer visibility
