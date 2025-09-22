@@ -424,7 +424,7 @@ const Maps: React.FC = () => {
     setError(null);
     setSelectedForest(forest);
     if (selectedState && forest) {
-      const path = `FOREST/${forest}.geojson`;
+      const path = `FOREST/${selectedState} ${forest}.geojson`;
       const result = await fetchGeoJSON(path);
       if (result.data) {
         setForestData(result.data);
