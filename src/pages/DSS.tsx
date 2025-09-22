@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useFRAForms } from '../hooks/useFRAForms';
+import { supabase } from '../lib/supabase';
 import { 
   CpuChipIcon, 
   LightBulbIcon,
@@ -10,14 +11,18 @@ import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
   XCircleIcon,
-  ClockIcon
+  ClockIcon,
+  ShieldCheckIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 const DSS: React.FC = () => {
-  const { individualForms, villageForms, forestForms, loading, error } = useFRAForms();
+  const { individualForms, villageForms, forestForms, loading, error, refetch } = useFRAForms();
   const [selectedClaimType, setSelectedClaimType] = useState<'individual' | 'village' | 'forest'>('individual');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
 
   // Get current data based on selected type
   const getCurrentData = () => {
@@ -33,23 +38,82 @@ const DSS: React.FC = () => {
     }
   };
 
-  // Filter data based on search term
+  // Filter data based on search term and status
   const getFilteredData = () => {
     const data = getCurrentData();
-    if (!searchTerm) return data;
+    let filtered = data;
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(item => 
+        item.claimant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.claim_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.village?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.district?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Filter by status based on active tab
+    if (activeTab === 'pending') {
+      filtered = filtered.filter(item => 
+        !item.status || item.status.toLowerCase() === 'pending' || item.status.toLowerCase() === 'unknown'
+      );
+    } else {
+      filtered = filtered.filter(item => 
+        item.status && (item.status.toLowerCase() === 'approved' || item.status.toLowerCase() === 'rejected')
+      );
+    }
+
+    return filtered;
+  };
+
+  // Update claim status in database
+  const updateClaimStatus = async (claimId: string, newStatus: 'Approved' | 'Rejected') => {
+    setUpdatingStatus(claimId);
     
-    return data.filter(item => 
-      item.claimant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.claim_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.village?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.district?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    try {
+      let tableName = '';
+      switch (selectedClaimType) {
+        case 'individual':
+          tableName = 'individual_forms';
+          break;
+        case 'village':
+          tableName = 'village_form';
+          break;
+        case 'forest':
+          tableName = 'forest_form';
+          break;
+      }
+
+      const { error } = await supabase
+        .from(tableName)
+        .update({ status: newStatus })
+        .eq('claim_id', claimId);
+
+      if (error) throw error;
+
+      // Refresh data
+      await refetch();
+      
+      // Update selected claim if it's the one being updated
+      if (selectedClaim?.claim_id === claimId) {
+        setSelectedClaim({ ...selectedClaim, status: newStatus });
+      }
+
+      // Show success message
+      alert(`Claim ${claimId} has been ${newStatus.toLowerCase()} successfully!`);
+      
+    } catch (error) {
+      console.error('Error updating claim status:', error);
+      alert(`Failed to update claim status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setUpdatingStatus(null);
+    }
   };
 
   // Enhanced eligibility checking with unique reasons
   const checkEligibilityWithReasons = (claim: any, type: string) => {
     const schemes = [];
-    const reasons = [];
 
     if (type === 'individual') {
       // PM-KISAN eligibility with detailed reasoning
@@ -58,8 +122,7 @@ const DSS: React.FC = () => {
           name: 'PM-KISAN',
           priority: 1,
           reason: `Eligible for PM-KISAN as you own ${claim.area} acres of cultivable land (requirement: >1.0 acre) and your annual income of ₹${claim.income?.toLocaleString()} is within the limit of ₹2,00,000. This scheme provides ₹6,000 per year in three installments directly to your bank account.`,
-          benefits: '₹6,000 annual income support, Direct bank transfer, No middleman involvement',
-          nextSteps: 'Visit nearest Common Service Center with Aadhaar, land documents, and bank details'
+          benefits: '₹6,000 annual income support, Direct bank transfer, No middleman involvement'
         });
       }
 
@@ -69,8 +132,7 @@ const DSS: React.FC = () => {
           name: 'Jal Jeevan Mission',
           priority: 2,
           reason: `Recommended for Jal Jeevan Mission based on your current status (${claim.status}) indicating potential lack of proper water connection. This mission ensures 'Har Ghar Jal' - functional household tap connection to every rural household.`,
-          benefits: 'Piped water supply, 55 liters per person per day, Quality assured water',
-          nextSteps: 'Contact Village Water & Sanitation Committee or Gram Panchayat for enrollment'
+          benefits: 'Piped water supply, 55 liters per person per day, Quality assured water'
         });
       }
 
@@ -80,8 +142,7 @@ const DSS: React.FC = () => {
           name: 'MGNREGA',
           priority: 3,
           reason: `Eligible for MGNREGA as your annual income of ₹${claim.income?.toLocaleString()} is below ₹1,20,000, indicating need for additional livelihood support. This scheme guarantees 100 days of wage employment per household per year.`,
-          benefits: '100 days guaranteed employment, ₹309 per day wage (varies by state), Asset creation in village',
-          nextSteps: 'Apply for job card at Gram Panchayat with household details and photographs'
+          benefits: '100 days guaranteed employment, ₹309 per day wage (varies by state), Asset creation in village'
         });
       }
     }
@@ -93,8 +154,7 @@ const DSS: React.FC = () => {
           name: 'Jal Jeevan Mission',
           priority: 1,
           reason: `Your village has established water resource rights (${claim.resources_rights}), making it ideal for Jal Jeevan Mission implementation. This will ensure piped water supply to all households in ${claim.village} village.`,
-          benefits: 'Village-wide piped water supply, Community water management, Improved health outcomes',
-          nextSteps: 'Village Water & Sanitation Committee should prepare detailed project proposal'
+          benefits: 'Village-wide piped water supply, Community water management, Improved health outcomes'
         });
       }
 
@@ -104,8 +164,7 @@ const DSS: React.FC = () => {
           name: 'MGNREGA',
           priority: 2,
           reason: `Village status shows ${claim.status}, indicating need for employment generation and rural development. MGNREGA can create sustainable livelihood opportunities while building village infrastructure.`,
-          benefits: 'Village infrastructure development, Employment generation, Skill development',
-          nextSteps: 'Gram Panchayat should prepare annual action plan and submit to Block office'
+          benefits: 'Village infrastructure development, Employment generation, Skill development'
         });
       }
 
@@ -114,8 +173,7 @@ const DSS: React.FC = () => {
         name: 'DAJGUA',
         priority: 3,
         reason: `As a village-level claimant in ${claim.district} district, your community can benefit from DAJGUA schemes for integrated tribal development, focusing on education, health, and livelihood enhancement.`,
-        benefits: 'Integrated development approach, Education & health facilities, Livelihood enhancement',
-        nextSteps: 'Contact District Collector office for DAJGUA scheme enrollment and project proposal'
+        benefits: 'Integrated development approach, Education & health facilities, Livelihood enhancement'
       });
     }
 
@@ -126,8 +184,7 @@ const DSS: React.FC = () => {
           name: 'DAJGUA',
           priority: 1,
           reason: `Your forest rights claim is approved (Status: ${claim.status}) for ${claim.forest} forest area. DAJGUA provides comprehensive support for forest-dependent communities with focus on sustainable forest management and livelihood diversification.`,
-          benefits: 'Forest conservation support, Alternative livelihood options, Community development',
-          nextSteps: 'Contact Tribal Welfare Department with approved forest rights certificate'
+          benefits: 'Forest conservation support, Alternative livelihood options, Community development'
         });
       }
 
@@ -137,8 +194,7 @@ const DSS: React.FC = () => {
           name: 'Jal Jeevan Mission',
           priority: 2,
           reason: `Your community has rights over water resources (${claim.resource}) in the forest area. Jal Jeevan Mission can provide sustainable water supply solutions for forest-dependent communities.`,
-          benefits: 'Sustainable water supply, Community-managed systems, Forest conservation alignment',
-          nextSteps: 'Coordinate with Forest Department and Village Water Committee for implementation'
+          benefits: 'Sustainable water supply, Community-managed systems, Forest conservation alignment'
         });
       }
 
@@ -147,8 +203,7 @@ const DSS: React.FC = () => {
         name: 'MGNREGA',
         priority: 3,
         reason: `Forest communities often need additional livelihood support. MGNREGA can provide employment in forest conservation activities, watershed management, and eco-restoration work in ${claim.forest} area.`,
-        benefits: 'Forest conservation employment, Watershed development, Eco-restoration work',
-        nextSteps: 'Register with local Gram Panchayat and request forest-related MGNREGA work'
+        benefits: 'Forest conservation employment, Watershed development, Eco-restoration work'
       });
     }
 
@@ -221,7 +276,7 @@ const DSS: React.FC = () => {
             <CpuChipIcon className="h-8 w-8 text-blue-600 mr-3" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">FRA Decision Support System</h1>
-              <p className="text-gray-600 mt-1">AI-powered CSS scheme recommendations for FRA claimants</p>
+              <p className="text-gray-600 mt-1">Government Officer Portal - CSS scheme recommendations and claim approval</p>
             </div>
           </div>
         </motion.div>
@@ -292,21 +347,39 @@ const DSS: React.FC = () => {
               </div>
             </div>
 
-            {/* Claims List */}
+            {/* Status Tabs */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
               <div className="p-6 border-b border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {claimTypes.find(t => t.id === selectedClaimType)?.name}
-                </h3>
-                <p className="text-sm text-gray-600 mt-1">
-                  {getFilteredData().length} claims found
-                </p>
+                <div className="flex bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => setActiveTab('pending')}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'pending' 
+                        ? 'bg-yellow-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <ClockIcon className="h-4 w-4 inline mr-2" />
+                    Pending ({getFilteredData().length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('approved')}
+                    className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                      activeTab === 'approved' 
+                        ? 'bg-green-500 text-white shadow-sm' 
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <CheckCircleIcon className="h-4 w-4 inline mr-2" />
+                    Processed ({getFilteredData().length})
+                  </button>
+                </div>
               </div>
               
               <div className="max-h-96 overflow-y-auto">
                 {getFilteredData().length === 0 ? (
                   <div className="p-8 text-center text-gray-500">
-                    <div className="text-gray-300 mb-2">No claims found</div>
+                    <div className="text-gray-300 mb-2">No {activeTab} claims found</div>
                     <div className="text-sm">Try adjusting your search terms</div>
                   </div>
                 ) : (
@@ -329,11 +402,39 @@ const DSS: React.FC = () => {
                               {claim.state}
                             </p>
                           </div>
-                          <div className="ml-3">
+                          <div className="ml-3 flex flex-col items-end space-y-2">
                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(claim.status)}`}>
                               {getStatusIcon(claim.status)}
-                              <span className="ml-1">{claim.status || 'Unknown'}</span>
+                              <span className="ml-1">{claim.status || 'Pending'}</span>
                             </span>
+                            
+                            {/* Approval/Rejection buttons for pending claims */}
+                            {activeTab === 'pending' && (claim.status?.toLowerCase() === 'pending' || !claim.status) && (
+                              <div className="flex space-x-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateClaimStatus(claim.claim_id, 'Approved');
+                                  }}
+                                  disabled={updatingStatus === claim.claim_id}
+                                  className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
+                                  title="Approve Claim"
+                                >
+                                  <CheckCircleIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateClaimStatus(claim.claim_id, 'Rejected');
+                                  }}
+                                  disabled={updatingStatus === claim.claim_id}
+                                  className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                                  title="Reject Claim"
+                                >
+                                  <XCircleIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </button>
@@ -355,7 +456,29 @@ const DSS: React.FC = () => {
               <div className="space-y-6">
                 {/* Claim Details */}
                 <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Claim Details</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Claim Details</h3>
+                    {activeTab === 'pending' && (selectedClaim.status?.toLowerCase() === 'pending' || !selectedClaim.status) && (
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => updateClaimStatus(selectedClaim.claim_id, 'Approved')}
+                          disabled={updatingStatus === selectedClaim.claim_id}
+                          className="flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <ShieldCheckIcon className="h-4 w-4 mr-2" />
+                          {updatingStatus === selectedClaim.claim_id ? 'Approving...' : 'Approve'}
+                        </button>
+                        <button
+                          onClick={() => updateClaimStatus(selectedClaim.claim_id, 'Rejected')}
+                          disabled={updatingStatus === selectedClaim.claim_id}
+                          className="flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                        >
+                          <XMarkIcon className="h-4 w-4 mr-2" />
+                          {updatingStatus === selectedClaim.claim_id ? 'Rejecting...' : 'Reject'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Claimant Name</label>
@@ -381,7 +504,7 @@ const DSS: React.FC = () => {
                       <label className="text-sm font-medium text-gray-600">Status</label>
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedClaim.status)}`}>
                         {getStatusIcon(selectedClaim.status)}
-                        <span className="ml-1">{selectedClaim.status || 'Unknown'}</span>
+                        <span className="ml-1">{selectedClaim.status || 'Pending'}</span>
                       </span>
                     </div>
                     {selectedClaim.area && (
@@ -422,7 +545,7 @@ const DSS: React.FC = () => {
                     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                       <div className="flex items-center mb-6">
                         <LightBulbIcon className="h-6 w-6 text-yellow-500 mr-2" />
-                        <h3 className="text-lg font-semibold text-gray-900">Recommended Scheme</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">Recommended CSS Scheme</h3>
                       </div>
 
                       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
@@ -438,7 +561,7 @@ const DSS: React.FC = () => {
 
                         <div className="space-y-4">
                           <div>
-                            <h5 className="font-semibold text-gray-900 mb-2">Why This Scheme?</h5>
+                            <h5 className="font-semibold text-gray-900 mb-2">Eligibility Reason</h5>
                             <p className="text-gray-700 leading-relaxed">{recommendation.reason}</p>
                           </div>
 
@@ -446,20 +569,6 @@ const DSS: React.FC = () => {
                             <h5 className="font-semibold text-gray-900 mb-2">Key Benefits</h5>
                             <p className="text-gray-700">{recommendation.benefits}</p>
                           </div>
-
-                          <div>
-                            <h5 className="font-semibold text-gray-900 mb-2">Next Steps</h5>
-                            <p className="text-gray-700">{recommendation.nextSteps}</p>
-                          </div>
-                        </div>
-
-                        <div className="mt-6 pt-4 border-t border-blue-200">
-                          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                            Get Application Form
-                          </button>
-                          <button className="ml-3 border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-6 rounded-lg transition-colors">
-                            Contact Support
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -472,7 +581,7 @@ const DSS: React.FC = () => {
                   <CpuChipIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Claim for Analysis</h3>
                   <p className="text-gray-600">
-                    Choose a claim from the left panel to get personalized CSS scheme recommendations
+                    Choose a claim from the left panel to get personalized CSS scheme recommendations and approval options
                   </p>
                 </div>
               </div>
