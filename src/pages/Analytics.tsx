@@ -342,7 +342,7 @@ const Analytics: React.FC = () => {
                       <Line type="monotone" dataKey="documentation" stroke="#3B82F6" strokeWidth={3} />
                       <Line type="monotone" dataKey="approvals" stroke="#10B981" strokeWidth={3} />
                       <Line type="monotone" dataKey="disputes" stroke="#EF4444" strokeWidth={3} />
-                    </BarChart>
+                    </LineChart>
                   </ResponsiveContainer>
                 </div>
               </motion.div>
