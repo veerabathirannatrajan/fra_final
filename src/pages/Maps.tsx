@@ -368,7 +368,9 @@ const Maps: React.FC = () => {
               });
             }
           });
-          map.current?.fitBounds(bounds, { padding: 50 });
+          if (!bounds.isEmpty()) {
+            map.current?.fitBounds(bounds, { padding: 50 });
+          }
         }
       }
     } else {
@@ -401,7 +403,9 @@ const Maps: React.FC = () => {
               });
             }
           });
-          map.current?.fitBounds(bounds, { padding: 50 });
+          if (!bounds.isEmpty()) {
+            map.current?.fitBounds(bounds, { padding: 50 });
+          }
         }
       }
     }
@@ -427,7 +431,9 @@ const Maps: React.FC = () => {
               });
             }
           });
-          map.current?.fitBounds(bounds, { padding: 50 });
+          if (!bounds.isEmpty()) {
+            map.current?.fitBounds(bounds, { padding: 50 });
+          }
         }
       }
     }
@@ -453,7 +459,9 @@ const Maps: React.FC = () => {
               });
             }
           });
-          map.current?.fitBounds(bounds, { padding: 50 });
+          if (!bounds.isEmpty()) {
+            map.current?.fitBounds(bounds, { padding: 50 });
+          }
         }
       }
     }

@@ -33,7 +33,15 @@ import {
 } from 'recharts';
 
 const Analytics: React.FC = () => {
-  const { loading: formsLoading, error: formsError, getAllRecommendations, getAnalytics } = useFRAForms();
+  const { 
+    loading: formsLoading, 
+    error: formsError, 
+    getAllRecommendations, 
+    getAnalytics,
+    individualForms,
+    villageForms,
+    forestForms
+  } = useFRAForms();
   const [timeRange, setTimeRange] = useState('6months');
   const [selectedState, setSelectedState] = useState('all');
   const [selectedMetric, setSelectedMetric] = useState('parcels');
