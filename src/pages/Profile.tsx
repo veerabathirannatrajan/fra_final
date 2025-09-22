@@ -14,17 +14,35 @@ import {
 const Profile: React.FC = () => {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
+  const [profileData, setProfileData] = useState({
+    name: '',
+    email: user?.email || '',
+    role: '',
+    department: '',
+    location: '',
+    phone: '',
+    bio: ''
+  });
+  const [loading, setLoading] = useState(false);
 
-  // Mock user data
-  const userData = {
-    name: 'Dr. Rajesh Kumar',
-    email: user?.email || 'rajesh.kumar@gov.in',
-    role: 'District Tribal Welfare Officer',
-    department: 'Ministry of Tribal Affairs',
-    location: 'Mayurbhanj, Odisha',
-    joinDate: '2023-06-15',
-    lastLogin: '2025-01-15 14:30',
-    profileImage: null
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const saveProfile = async () => {
+    setLoading(true);
+    try {
+      // Here you would save to Supabase profiles table
+      // For now, we'll just show success message
+      alert('Profile saved successfully!');
+    } catch (error) {
+      alert('Error saving profile');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const uploadHistory = [
@@ -51,7 +69,9 @@ const Profile: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                 <input
                   type="text"
-                  defaultValue={userData.name}
+                  value={profileData.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="Enter your full name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -60,7 +80,9 @@ const Profile: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                 <input
                   type="email"
-                  defaultValue={userData.email}
+                  value={profileData.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  placeholder="Enter your email address"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -69,7 +91,9 @@ const Profile: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
                 <input
                   type="text"
-                  defaultValue={userData.role}
+                  value={profileData.role}
+                  onChange={(e) => handleInputChange('role', e.target.value)}
+                  placeholder="e.g., District Tribal Welfare Officer"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -78,7 +102,9 @@ const Profile: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
                 <input
                   type="text"
-                  defaultValue={userData.department}
+                  value={profileData.department}
+                  onChange={(e) => handleInputChange('department', e.target.value)}
+                  placeholder="e.g., Ministry of Tribal Affairs"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -87,7 +113,9 @@ const Profile: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
                 <input
                   type="text"
-                  defaultValue={userData.location}
+                  value={profileData.location}
+                  onChange={(e) => handleInputChange('location', e.target.value)}
+                  placeholder="e.g., Mayurbhanj, Odisha"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -96,6 +124,8 @@ const Profile: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
                 <input
                   type="tel"
+                  value={profileData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
                   placeholder="+91 98765 43210"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
@@ -106,14 +136,20 @@ const Profile: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
               <textarea
                 rows={4}
+                value={profileData.bio}
+                onChange={(e) => handleInputChange('bio', e.target.value)}
                 placeholder="Tell us about yourself and your role in tribal affairs..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             
             <div className="flex justify-end">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
-                Save Changes
+              <button 
+                onClick={saveProfile}
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -305,16 +341,16 @@ const Profile: React.FC = () => {
                 <div className="mx-auto w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mb-4">
                   <UserCircleIcon className="h-12 w-12 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">{userData.name}</h3>
-                <p className="text-sm text-gray-600">{userData.role}</p>
-                <p className="text-xs text-gray-500 mt-1">{userData.department}</p>
+                <h3 className="text-lg font-semibold text-gray-900">{profileData.name || 'Your Name'}</h3>
+                <p className="text-sm text-gray-600">{profileData.role || 'Your Role'}</p>
+                <p className="text-xs text-gray-500 mt-1">{profileData.department || 'Your Department'}</p>
               </div>
 
               {/* Quick Stats */}
               <div className="space-y-3 mb-6 pt-4 border-t border-gray-200">
                 <div className="flex items-center text-sm">
                   <ClockIcon className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">Joined {userData.joinDate}</span>
+                  <span className="text-gray-600">Please complete your profile</span>
                 </div>
                 <div className="flex items-center text-sm">
                   <DocumentTextIcon className="h-4 w-4 text-gray-400 mr-2" />

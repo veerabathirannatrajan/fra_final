@@ -62,19 +62,7 @@ const Dashboard: React.FC = () => {
       label: 'Forest Claims', 
       value: analytics?.claimsByType?.Forest || 0,
       color: 'orange' 
-    },
-    { 
-      icon: FolderIcon, 
-      label: 'PM-KISAN Eligible', 
-      value: analytics?.schemeEligibility?.['PM-KISAN'] || 0,
-      color: 'red' 
-    },
-    { 
-      icon: ChartBarIcon, 
-      label: 'MGNREGA Eligible', 
-      value: analytics?.schemeEligibility?.['MGNREGA'] || 0,
-      color: 'indigo' 
-    },
+    }
   ];
 
   const getColorClasses = (color: string) => {
@@ -157,7 +145,7 @@ const Dashboard: React.FC = () => {
         </motion.div>
 
         {/* Overview Stats - Fixed Numbers */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {overviewStats.map((stat, index) => (
             <motion.div
               key={index}

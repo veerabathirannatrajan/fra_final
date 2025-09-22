@@ -348,33 +348,31 @@ const Analytics: React.FC = () => {
               </motion.div>
 
               {/* Status Summary */}
+              {/* Claim Status Distribution */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Processing Efficiency Metrics</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Claim Status Distribution</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={efficiencyMetrics}>
-                      <PolarGrid />
-                      <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10 }} />
-                      <PolarRadiusAxis 
-                        angle={90} 
-                        domain={[0, 100]} 
-                        tick={{ fontSize: 10 }}
-                      />
-                      <Radar
-                        name="Efficiency"
+                    <PieChart>
+                      <Pie
+                        data={statusData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
                         dataKey="value"
-                        stroke="#3B82F6"
-                        fill="#3B82F6"
-                        fillOpacity={0.3}
-                        strokeWidth={2}
-                      />
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {statusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
                       <Tooltip />
-                    </RadarChart>
+                    </PieChart>
                   </ResponsiveContainer>
                 </div>
               </motion.div>

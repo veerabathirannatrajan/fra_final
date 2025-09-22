@@ -254,9 +254,8 @@ export const useFRAForms = () => {
     // Status summary
     const statusSummary: Record<string, number> = {};
     [...individualForms, ...villageForms, ...forestForms].forEach(form => {
-      if (form.status) {
-        statusSummary[form.status] = (statusSummary[form.status] || 0) + 1;
-      }
+      const status = form.status || 'Pending';
+      statusSummary[status] = (statusSummary[status] || 0) + 1;
     });
 
     return {
