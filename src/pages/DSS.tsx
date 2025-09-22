@@ -212,49 +212,41 @@ const DSS: React.FC = () => {
                 stackId="2"
                 stroke="#10B981"
                 fill="#10B981"
-                fillOpacity={0.6}
     let primaryScheme = '';
               />
-            </AreaChart>
           </ResponsiveContainer>
         );
 
-        primaryScheme = primaryScheme || 'PM-KISAN';
       default:
         return (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={riskAssessmentData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis 
-        primaryScheme = primaryScheme || 'Jal Jeevan Mission';
                 dataKey="category" 
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 10, fill: '#6B7280' }}
                 angle={-45}
                 textAnchor="end"
-        primaryScheme = primaryScheme || 'MGNREGA';
                 height={100}
               />
               <YAxis 
                 axisLine={false}
                 tickLine={false}
                 tick={{ fontSize: 12, fill: '#6B7280' }}
-        primaryScheme = primaryScheme || 'Jal Jeevan Mission';
               />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#fff',
                   border: '1px solid #e5e7eb',
                   borderRadius: '8px',
-        primaryScheme = primaryScheme || 'MGNREGA';
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                 }}
               />
               <Bar dataKey="probability" fill="#F59E0B" name="Probability %" radius={[4, 4, 0, 0]} />
               <Bar dataKey="impact" fill="#EF4444" name="Impact %" radius={[4, 4, 0, 0]} />
             </BarChart>
-        primaryScheme = primaryScheme || 'DAJGUA';
           </ResponsiveContainer>
         );
     }
