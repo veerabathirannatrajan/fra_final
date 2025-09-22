@@ -39,6 +39,10 @@ const Dashboard: React.FC = () => {
 
   const [analytics, setAnalytics] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [claimTypeData, setClaimTypeData] = useState<any[]>([]);
+  const [stateData, setStateData] = useState<any[]>([]);
+  const [schemeEligibilityData, setSchemeEligibilityData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!formsLoading && !formsError) {
@@ -46,6 +50,40 @@ const Dashboard: React.FC = () => {
       const recommendationsData = getAllRecommendations();
       setAnalytics(analyticsData);
       setRecommendations(recommendationsData);
+      
+      // Generate static chart data based on current analytics
+      const baseChartData = [
+        { month: 'Jan', individual: Math.floor(analyticsData.claimsByType.Individual * 0.7), village: Math.floor(analyticsData.claimsByType.Village * 0.6), forest: Math.floor(analyticsData.claimsByType.Forest * 0.5) },
+        { month: 'Feb', individual: Math.floor(analyticsData.claimsByType.Individual * 0.75), village: Math.floor(analyticsData.claimsByType.Village * 0.7), forest: Math.floor(analyticsData.claimsByType.Forest * 0.6) },
+        { month: 'Mar', individual: Math.floor(analyticsData.claimsByType.Individual * 0.8), village: Math.floor(analyticsData.claimsByType.Village * 0.75), forest: Math.floor(analyticsData.claimsByType.Forest * 0.7) },
+        { month: 'Apr', individual: Math.floor(analyticsData.claimsByType.Individual * 0.85), village: Math.floor(analyticsData.claimsByType.Village * 0.8), forest: Math.floor(analyticsData.claimsByType.Forest * 0.8) },
+        { month: 'May', individual: Math.floor(analyticsData.claimsByType.Individual * 0.9), village: Math.floor(analyticsData.claimsByType.Village * 0.9), forest: Math.floor(analyticsData.claimsByType.Forest * 0.9) },
+        { month: 'Jun', individual: analyticsData.claimsByType.Individual, village: analyticsData.claimsByType.Village, forest: analyticsData.claimsByType.Forest },
+      ];
+      setChartData(baseChartData);
+
+      const baseClaimTypeData = [
+        { name: 'Individual Claims', value: analyticsData.claimsByType.Individual, color: '#10B981' },
+        { name: 'Village Claims', value: analyticsData.claimsByType.Village, color: '#F59E0B' },
+        { name: 'Forest Claims', value: analyticsData.claimsByType.Forest, color: '#3B82F6' },
+      ];
+      setClaimTypeData(baseClaimTypeData);
+
+      const baseStateData = Object.entries(analyticsData.stateDistribution).map(([state, claims]) => ({
+        state,
+        claims: claims as number,
+        progress: Math.min(100, ((claims as number) / Math.max(...Object.values(analyticsData.stateDistribution))) * 100)
+      })).slice(0, 5);
+      setStateData(baseStateData);
+
+      const baseSchemeEligibilityData = [
+        { scheme: 'PM-KISAN', eligible: analyticsData.schemeEligibility['PM-KISAN'], color: '#10B981' },
+        { scheme: 'Jal Jeevan Mission', eligible: analyticsData.schemeEligibility['Jal Jeevan Mission'], color: '#3B82F6' },
+        { scheme: 'MGNREGA', eligible: analyticsData.schemeEligibility['MGNREGA'], color: '#F59E0B' },
+        { scheme: 'DAJGUA', eligible: analyticsData.schemeEligibility['DAJGUA'], color: '#8B5CF6' },
+      ];
+      setSchemeEligibilityData(baseSchemeEligibilityData);
+      
       setLoading(false);
     }
   }, [formsLoading, formsError, getAnalytics, getAllRecommendations]);
@@ -94,35 +132,6 @@ const Dashboard: React.FC = () => {
       color: 'indigo' 
     },
   ];
-
-  // Generate chart data from analytics
-  const chartData = analytics ? [
-    { month: 'Jan', individual: Math.floor(analytics.claimsByType.Individual * 0.7), village: Math.floor(analytics.claimsByType.Village * 0.6), forest: Math.floor(analytics.claimsByType.Forest * 0.5) },
-    { month: 'Feb', individual: Math.floor(analytics.claimsByType.Individual * 0.75), village: Math.floor(analytics.claimsByType.Village * 0.7), forest: Math.floor(analytics.claimsByType.Forest * 0.6) },
-    { month: 'Mar', individual: Math.floor(analytics.claimsByType.Individual * 0.8), village: Math.floor(analytics.claimsByType.Village * 0.75), forest: Math.floor(analytics.claimsByType.Forest * 0.7) },
-    { month: 'Apr', individual: Math.floor(analytics.claimsByType.Individual * 0.85), village: Math.floor(analytics.claimsByType.Village * 0.8), forest: Math.floor(analytics.claimsByType.Forest * 0.8) },
-    { month: 'May', individual: Math.floor(analytics.claimsByType.Individual * 0.9), village: Math.floor(analytics.claimsByType.Village * 0.9), forest: Math.floor(analytics.claimsByType.Forest * 0.9) },
-    { month: 'Jun', individual: analytics.claimsByType.Individual, village: analytics.claimsByType.Village, forest: analytics.claimsByType.Forest },
-  ] : [];
-
-  const claimTypeData = analytics ? [
-    { name: 'Individual Claims', value: analytics.claimsByType.Individual, color: '#10B981' },
-    { name: 'Village Claims', value: analytics.claimsByType.Village, color: '#F59E0B' },
-    { name: 'Forest Claims', value: analytics.claimsByType.Forest, color: '#3B82F6' },
-  ] : [];
-
-  const stateData = analytics ? Object.entries(analytics.stateDistribution).map(([state, claims]) => ({
-    state,
-    claims: claims as number,
-    progress: Math.min(100, ((claims as number) / Math.max(...Object.values(analytics.stateDistribution))) * 100)
-  })).slice(0, 5) : [];
-
-  const schemeEligibilityData = analytics ? [
-    { scheme: 'PM-KISAN', eligible: analytics.schemeEligibility['PM-KISAN'], color: '#10B981' },
-    { scheme: 'Jal Jeevan Mission', eligible: analytics.schemeEligibility['Jal Jeevan Mission'], color: '#3B82F6' },
-    { scheme: 'MGNREGA', eligible: analytics.schemeEligibility['MGNREGA'], color: '#F59E0B' },
-    { scheme: 'DAJGUA', eligible: analytics.schemeEligibility['DAJGUA'], color: '#8B5CF6' },
-  ] : [];
 
   const getColorClasses = (color: string) => {
     const colors = {

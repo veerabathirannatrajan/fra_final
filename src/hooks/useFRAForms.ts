@@ -55,6 +55,7 @@ export interface SchemeRecommendation {
   status?: string;
   recommended_schemes: string[];
   eligibility_reasons: string[];
+  primary_scheme?: string;
 }
 
 export const useFRAForms = () => {
