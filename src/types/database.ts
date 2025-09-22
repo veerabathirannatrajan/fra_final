@@ -121,6 +121,135 @@ export interface Database {
           created_at?: string | null;
         };
       };
+      individual_forms: {
+        Row: {
+          claim_id: string;
+          claimant_name: string;
+          address: string | null;
+          village: string | null;
+          land_no: string | null;
+          gram_panchayat: string | null;
+          taluka: string | null;
+          district: string | null;
+          state: string | null;
+          area: number | null;
+          status: string | null;
+          income: number | null;
+          forest_near: string | null;
+          aadhar_number: string | null;
+        };
+        Insert: {
+          claim_id?: string;
+          claimant_name: string;
+          address?: string | null;
+          village?: string | null;
+          land_no?: string | null;
+          gram_panchayat?: string | null;
+          taluka?: string | null;
+          district?: string | null;
+          state?: string | null;
+          area?: number | null;
+          status?: string | null;
+          income?: number | null;
+          forest_near?: string | null;
+          aadhar_number?: string | null;
+        };
+        Update: {
+          claim_id?: string;
+          claimant_name?: string;
+          address?: string | null;
+          village?: string | null;
+          land_no?: string | null;
+          gram_panchayat?: string | null;
+          taluka?: string | null;
+          district?: string | null;
+          state?: string | null;
+          area?: number | null;
+          status?: string | null;
+          income?: number | null;
+          forest_near?: string | null;
+          aadhar_number?: string | null;
+        };
+      };
+      village_form: {
+        Row: {
+          claim_id: string;
+          claimant_name: string;
+          village: string | null;
+          gram_panchayat: string | null;
+          taluka: string | null;
+          district: string | null;
+          state: string | null;
+          village_no: string | null;
+          resources_rights: string | null;
+          status: string | null;
+        };
+        Insert: {
+          claim_id?: string;
+          claimant_name: string;
+          village?: string | null;
+          gram_panchayat?: string | null;
+          taluka?: string | null;
+          district?: string | null;
+          state?: string | null;
+          village_no?: string | null;
+          resources_rights?: string | null;
+          status?: string | null;
+        };
+        Update: {
+          claim_id?: string;
+          claimant_name?: string;
+          village?: string | null;
+          gram_panchayat?: string | null;
+          taluka?: string | null;
+          district?: string | null;
+          state?: string | null;
+          village_no?: string | null;
+          resources_rights?: string | null;
+          status?: string | null;
+        };
+      };
+      forest_form: {
+        Row: {
+          claim_id: string;
+          claimant_name: string;
+          gram_panchayat: string | null;
+          village: string | null;
+          taluka: string | null;
+          forest: string | null;
+          district: string | null;
+          state: string | null;
+          forest_no: string | null;
+          status: string | null;
+          resource: string | null;
+        };
+        Insert: {
+          claim_id?: string;
+          claimant_name: string;
+          gram_panchayat?: string | null;
+          village?: string | null;
+          taluka?: string | null;
+          forest?: string | null;
+          district?: string | null;
+          state?: string | null;
+          forest_no?: string | null;
+          status?: string | null;
+          resource?: string | null;
+        };
+        Update: {
+          claim_id?: string;
+          claimant_name?: string;
+          gram_panchayat?: string | null;
+          village?: string | null;
+          taluka?: string | null;
+          forest?: string | null;
+          district?: string | null;
+          state?: string | null;
+          forest_no?: string | null;
+          status?: string | null;
+          resource?: string | null;
+        };
+      };
       dss_results: {
         Row: {
           id: string;
