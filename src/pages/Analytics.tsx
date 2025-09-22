@@ -238,27 +238,35 @@ const Analytics: React.FC = () => {
         {activeTab === 'overview' && (
           <>
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Claim Type Distribution */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              {/* Individual Claims Status */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">FRA Claim Type Distribution</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Individual Claims Status</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={claimTypeData}
+                        data={[
+                          { name: 'Approved', value: individualForms.filter(f => f.status === 'Approved').length, color: '#10B981' },
+                          { name: 'Pending', value: individualForms.filter(f => !f.status || f.status === 'Pending').length, color: '#F59E0B' },
+                          { name: 'Rejected', value: individualForms.filter(f => f.status === 'Rejected').length, color: '#EF4444' }
+                        ]}
                         cx="50%"
                         cy="50%"
                         outerRadius={100}
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {claimTypeData.map((entry, index) => (
+                        {[
+                          { name: 'Approved', value: individualForms.filter(f => f.status === 'Approved').length, color: '#10B981' },
+                          { name: 'Pending', value: individualForms.filter(f => !f.status || f.status === 'Pending').length, color: '#F59E0B' },
+                          { name: 'Rejected', value: individualForms.filter(f => f.status === 'Rejected').length, color: '#EF4444' }
+                        ].map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -268,11 +276,88 @@ const Analytics: React.FC = () => {
                 </div>
               </motion.div>
 
-              {/* Scheme Eligibility */}
+              {/* Village Claims Status */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Village Claims Status</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Approved', value: villageForms.filter(f => f.status === 'Approved').length, color: '#10B981' },
+                          { name: 'Pending', value: villageForms.filter(f => !f.status || f.status === 'Pending').length, color: '#F59E0B' },
+                          { name: 'Rejected', value: villageForms.filter(f => f.status === 'Rejected').length, color: '#EF4444' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {[
+                          { name: 'Approved', value: villageForms.filter(f => f.status === 'Approved').length, color: '#10B981' },
+                          { name: 'Pending', value: villageForms.filter(f => !f.status || f.status === 'Pending').length, color: '#F59E0B' },
+                          { name: 'Rejected', value: villageForms.filter(f => f.status === 'Rejected').length, color: '#EF4444' }
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+
+              {/* Forest Claims Status */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Forest Claims Status</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Approved', value: forestForms.filter(f => f.status === 'Approved').length, color: '#10B981' },
+                          { name: 'Pending', value: forestForms.filter(f => !f.status || f.status === 'Pending').length, color: '#F59E0B' },
+                          { name: 'Rejected', value: forestForms.filter(f => f.status === 'Rejected').length, color: '#EF4444' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {[
+                          { name: 'Approved', value: forestForms.filter(f => f.status === 'Approved').length, color: '#10B981' },
+                          { name: 'Pending', value: forestForms.filter(f => !f.status || f.status === 'Pending').length, color: '#F59E0B' },
+                          { name: 'Rejected', value: forestForms.filter(f => f.status === 'Rejected').length, color: '#EF4444' }
+                        ].map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Additional Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Scheme Eligibility */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">CSS Scheme Eligibility</h3>
@@ -308,11 +393,11 @@ const Analytics: React.FC = () => {
                 </div>
               </motion.div>
 
-              {/* State-wise Distribution */}
+              {/* Monthly Trends */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.7 }}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
               >
                 <h3 className="text-lg font-semibold text-gray-900 mb-6">Monthly Claim Trends</h3>
@@ -343,36 +428,6 @@ const Analytics: React.FC = () => {
                       <Line type="monotone" dataKey="approvals" stroke="#10B981" strokeWidth={3} />
                       <Line type="monotone" dataKey="disputes" stroke="#EF4444" strokeWidth={3} />
                     </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </motion.div>
-
-              {/* Status Summary */}
-              {/* Claim Status Distribution */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-              >
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Claim Status Distribution</h3>
-                <div className="h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
                   </ResponsiveContainer>
                 </div>
               </motion.div>

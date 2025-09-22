@@ -21,7 +21,7 @@ interface LayerConfig {
   name: string;
   color: string;
   visible: boolean;
-  type: 'administrative' | 'forest' | 'landuse' | 'infrastructure';
+  type: 'administrative' | 'forest' | 'asset';
 }
 
 const Maps: React.FC = () => {
@@ -55,12 +55,12 @@ const Maps: React.FC = () => {
   const [layers, setLayers] = useState<LayerConfig[]>([
     { id: 'administrative', name: 'Administrative Boundary', color: '#3B82F6', visible: true, type: 'administrative' },
     { id: 'forest', name: 'Forest Areas', color: '#10B981', visible: true, type: 'forest' },
-    { id: 'ifr', name: 'IFR Areas', color: '#EF4444', visible: false, type: 'landuse' },
-    { id: 'cr', name: 'CR Areas', color: '#3B82F6', visible: false, type: 'landuse' },
-    { id: 'cfr', name: 'CFR Areas', color: '#10B981', visible: false, type: 'landuse' },
-    { id: 'agriculture', name: 'Agriculture', color: '#84CC16', visible: false, type: 'landuse' },
-    { id: 'water', name: 'Water Bodies', color: '#06B6D4', visible: false, type: 'landuse' },
-    { id: 'homestead', name: 'Homesteads', color: '#F97316', visible: false, type: 'landuse' },
+    { id: 'ifr', name: 'IFR Areas', color: '#DC2626', visible: false, type: 'asset' },
+    { id: 'cr', name: 'CR Areas', color: '#7C3AED', visible: false, type: 'asset' },
+    { id: 'cfr', name: 'CFR Areas', color: '#059669', visible: false, type: 'asset' },
+    { id: 'agriculture', name: 'Agriculture', color: '#65A30D', visible: false, type: 'asset' },
+    { id: 'water', name: 'Water Bodies', color: '#0891B2', visible: false, type: 'asset' },
+    { id: 'homestead', name: 'Homesteads', color: '#EA580C', visible: false, type: 'asset' },
   ]);
 
   const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -216,7 +216,7 @@ const Maps: React.FC = () => {
   }, []);
 
   // Add GeoJSON layer to map
-  const addGeoJSONLayer = useCallback((data: GeoJSONData, layerId: string, color: string) => {
+  const addGeoJSONLayer = useCallback((data: GeoJSONData, layerId: string, color: string, visible: boolean = true) => {
     if (!map.current || !mapLoaded) return;
 
     // Remove existing layer if it exists
@@ -241,9 +241,12 @@ const Maps: React.FC = () => {
       id: layerId + '-fill',
       type: 'fill',
       source: layerId,
+      layout: {
+        'visibility': visible ? 'visible' : 'none'
+      },
       paint: {
         'fill-color': color,
-        'fill-opacity': 0.2
+        'fill-opacity': layerId === 'water' ? 0.7 : 0.3
       }
     });
 
@@ -252,12 +255,98 @@ const Maps: React.FC = () => {
       id: layerId + '-line',
       type: 'line',
       source: layerId,
+      layout: {
+        'visibility': visible ? 'visible' : 'none'
+      },
       paint: {
         'line-color': color,
-        'line-width': 2
+        'line-width': layerId === 'water' ? 3 : 2,
+        'line-opacity': layerId === 'water' ? 0.9 : 0.8
       }
     });
   }, [mapLoaded]);
+
+  // Generate mock asset data for demonstration
+  const generateAssetData = useCallback((assetType: string, baseCoords: [number, number]) => {
+    const features = [];
+    const numFeatures = Math.floor(Math.random() * 5) + 3; // 3-7 features
+    
+    for (let i = 0; i < numFeatures; i++) {
+      const offsetLat = (Math.random() - 0.5) * 0.1;
+      const offsetLng = (Math.random() - 0.5) * 0.1;
+      
+      let geometry;
+      if (assetType === 'water') {
+        // Water bodies as polygons (lakes, ponds)
+        const size = Math.random() * 0.02 + 0.005;
+        geometry = {
+          type: 'Polygon',
+          coordinates: [[
+            [baseCoords[0] + offsetLng, baseCoords[1] + offsetLat],
+            [baseCoords[0] + offsetLng + size, baseCoords[1] + offsetLat],
+            [baseCoords[0] + offsetLng + size, baseCoords[1] + offsetLat + size],
+            [baseCoords[0] + offsetLng, baseCoords[1] + offsetLat + size],
+            [baseCoords[0] + offsetLng, baseCoords[1] + offsetLat]
+          ]]
+        };
+      } else {
+        // Other assets as polygons
+        const size = Math.random() * 0.03 + 0.01;
+        geometry = {
+          type: 'Polygon',
+          coordinates: [[
+            [baseCoords[0] + offsetLng, baseCoords[1] + offsetLat],
+            [baseCoords[0] + offsetLng + size, baseCoords[1] + offsetLat],
+            [baseCoords[0] + offsetLng + size, baseCoords[1] + offsetLat + size],
+            [baseCoords[0] + offsetLng, baseCoords[1] + offsetLat + size],
+            [baseCoords[0] + offsetLng, baseCoords[1] + offsetLat]
+          ]]
+        };
+      }
+      
+      features.push({
+        type: 'Feature',
+        properties: {
+          type: assetType,
+          id: `${assetType}_${i + 1}`,
+          area: Math.random() * 10 + 1
+        },
+        geometry
+      });
+    }
+    
+    return {
+      type: 'FeatureCollection',
+      features
+    };
+  }, []);
+
+  // Load asset layers when administrative boundary is loaded
+  useEffect(() => {
+    if (geoJsonData && map.current && mapLoaded) {
+      // Get center coordinates from current data
+      let centerCoords: [number, number] = [78.9629, 20.5937];
+      
+      if (geoJsonData.features && geoJsonData.features.length > 0) {
+        const firstFeature = geoJsonData.features[0];
+        if (firstFeature.geometry.type === 'Polygon') {
+          const coords = firstFeature.geometry.coordinates[0][0];
+          centerCoords = [coords[0], coords[1]];
+        }
+      }
+      
+      // Generate and add asset layers
+      const assetTypes = ['ifr', 'cr', 'cfr', 'agriculture', 'water', 'homestead'];
+      
+      assetTypes.forEach(assetType => {
+        const layer = layers.find(l => l.id === assetType);
+        if (layer) {
+          const assetData = generateAssetData(assetType, centerCoords);
+          addGeoJSONLayer(assetData, assetType, layer.color, layer.visible);
+        }
+      });
+    }
+  }, [geoJsonData, mapLoaded, generateAssetData, addGeoJSONLayer, layers]);
 
   // Handle state selection
   const handleStateChange = useCallback(async (state: string) => {
@@ -375,6 +464,21 @@ const Maps: React.FC = () => {
     setLayers(prev => prev.map(layer => 
       layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
     ));
+    
+    // Update map layer visibility
+    if (map.current && mapLoaded) {
+      const layer = layers.find(l => l.id === layerId);
+      if (layer) {
+        const newVisibility = !layer.visible;
+        
+        if (map.current.getLayer(layerId + '-fill')) {
+          map.current.setLayoutProperty(layerId + '-fill', 'visibility', newVisibility ? 'visible' : 'none');
+        }
+        if (map.current.getLayer(layerId + '-line')) {
+          map.current.setLayoutProperty(layerId + '-line', 'visibility', newVisibility ? 'visible' : 'none');
+        }
+      }
+    }
   };
 
   // Clear all selections
@@ -493,7 +597,7 @@ const Maps: React.FC = () => {
 
             {/* Layer Controls */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Map Layers</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Mapping Layers</h3>
               <div className="space-y-3">
                 {layers.map((layer) => (
                   <div key={layer.id} className="flex items-center justify-between">
@@ -516,6 +620,18 @@ const Maps: React.FC = () => {
                     </button>
                   </div>
                 ))}
+              </div>
+              
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Asset Types:</h4>
+                <div className="text-xs text-blue-700 space-y-1">
+                  <div>• IFR: Individual Forest Rights</div>
+                  <div>• CR: Community Rights</div>
+                  <div>• CFR: Community Forest Resources</div>
+                  <div>• Agriculture: Cultivated lands</div>
+                  <div>• Water Bodies: Rivers, lakes, ponds</div>
+                  <div>• Homesteads: Residential areas</div>
+                </div>
               </div>
             </div>
 
@@ -589,7 +705,7 @@ const Maps: React.FC = () => {
                   <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-50 to-green-50">
                     <div className="text-center">
                       <MapIcon className="h-16 w-16 text-blue-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">FRA Atlas WebGIS</h3>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">FRA Asset Mapping</h3>
                       {!mapboxToken || mapboxToken === 'your_mapbox_access_token_here' ? (
                         <p className="text-sm text-gray-500">
                           Please add your Mapbox API key to .env file as VITE_MAPBOX_ACCESS_TOKEN
@@ -604,47 +720,6 @@ const Maps: React.FC = () => {
                 )}
               </div>
             </div>
-
-            {/* Map Statistics */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-6 bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Map Statistics</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{states.length}</div>
-                  <div className="text-sm text-gray-600">States Available</div>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{districts.length}</div>
-                  <div className="text-sm text-gray-600">Districts in State</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">{villages.length}</div>
-                  <div className="text-sm text-gray-600">Villages in District</div>
-                </div>
-                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">{forests.length}</div>
-                  <div className="text-sm text-gray-600">Forest Areas</div>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">WebGIS Features:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Dynamic hierarchical filtering (State → District → Village)</li>
-                  <li>• Real-time GeoJSON data loading from Supabase storage</li>
-                  <li>• Multiple base map layers (Satellite, Streets, Terrain)</li>
-                  <li>• Forest area visualization and management</li>
-                  <li>• Interactive layer controls and legend</li>
-                  <li>• Auto-zoom to selected administrative boundaries</li>
-                </ul>
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </div>

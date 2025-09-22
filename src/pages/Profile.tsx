@@ -56,7 +56,6 @@ const Profile: React.FC = () => {
     { id: 'profile', name: 'Profile Information', icon: UserCircleIcon },
     { id: 'security', name: 'Security Settings', icon: ShieldCheckIcon },
     { id: 'notifications', name: 'Notifications', icon: BellIcon },
-    { id: 'history', name: 'Upload History', icon: DocumentTextIcon },
   ];
 
   const renderTabContent = () => {
@@ -264,51 +263,6 @@ const Profile: React.FC = () => {
           </div>
         );
         
-      case 'history':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">Upload History</h3>
-              <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                Export History
-              </button>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">File Name</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Upload Date</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Size</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {uploadHistory.map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-100 transition-colors">
-                        <td className="py-3 px-4 text-sm text-gray-900">{item.file}</td>
-                        <td className="py-3 px-4 text-sm text-gray-600">{item.date}</td>
-                        <td className="py-3 px-4 text-sm text-gray-600">{item.size}</td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                            item.status === 'Processed' 
-                              ? 'bg-green-100 text-green-800' 
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {item.status}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        );
-        
       default:
         return null;
     }
@@ -350,11 +304,7 @@ const Profile: React.FC = () => {
               <div className="space-y-3 mb-6 pt-4 border-t border-gray-200">
                 <div className="flex items-center text-sm">
                   <ClockIcon className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">Please complete your profile</span>
-                </div>
-                <div className="flex items-center text-sm">
-                  <DocumentTextIcon className="h-4 w-4 text-gray-400 mr-2" />
-                  <span className="text-gray-600">{uploadHistory.length} files uploaded</span>
+                  <span className="text-gray-600">{profileData.name ? 'Profile completed' : 'Please complete your profile'}</span>
                 </div>
               </div>
 
