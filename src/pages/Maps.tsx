@@ -21,7 +21,7 @@ interface LayerConfig {
   name: string;
   color: string;
   visible: boolean;
-  type: 'administrative' | 'forest' | 'asset';
+  type: 'administrative' | 'forest';
 }
 
 const Maps: React.FC = () => {
@@ -55,16 +55,6 @@ const Maps: React.FC = () => {
   const [layers, setLayers] = useState<LayerConfig[]>([
     { id: 'administrative', name: 'Administrative Boundary', color: '#3B82F6', visible: true, type: 'administrative' },
     { id: 'forest', name: 'Forest Areas', color: '#10B981', visible: true, type: 'forest' },
-    { id: 'land-1', name: 'Land Part 1', color: '#FF6B6B', visible: false, type: 'land' },
-    { id: 'land-2', name: 'Land Part 2', color: '#4ECDC4', visible: false, type: 'land' },
-    { id: 'land-3', name: 'Land Part 3', color: '#45B7D1', visible: false, type: 'land' },
-    { id: 'land-4', name: 'Land Part 4', color: '#96CEB4', visible: false, type: 'land' },
-    { id: 'land-5', name: 'Land Part 5', color: '#FFEAA7', visible: false, type: 'land' },
-    { id: 'land-6', name: 'Land Part 6', color: '#DDA0DD', visible: false, type: 'land' },
-    { id: 'land-7', name: 'Land Part 7', color: '#98D8C8', visible: false, type: 'land' },
-    { id: 'land-8', name: 'Land Part 8', color: '#F7DC6F', visible: false, type: 'land' },
-    { id: 'land-9', name: 'Land Part 9', color: '#BB8FCE', visible: false, type: 'land' },
-    { id: 'land-10', name: 'Land Part 10', color: '#85C1E9', visible: false, type: 'land' },
   ]);
 
   const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -318,33 +308,6 @@ const Maps: React.FC = () => {
       features
     };
   }, []);
-
-  // Load asset layers when administrative boundary is loaded
-  useEffect(() => {
-    if (selectedState && selectedDistrict && selectedVillage && map.current && mapLoaded) {
-      // Load land parts when village is selected
-      loadLandParts();
-    }
-  }, [selectedState, selectedDistrict, selectedVillage, mapLoaded]);
-
-  // Load land parts from storage
-  const loadLandParts = async () => {
-    if (!selectedState || !selectedDistrict || !selectedVillage) return;
-    
-    for (let part = 1; part <= 10; part++) {
-      const path = `LAND/${selectedState} ${selectedDistrict} ${selectedVillage} ${part}.geojson`;
-      const result = await fetchGeoJSON(path);
-      if (result.data) {
-        const layer = layers.find(l => l.id === `land-${part}`);
-        if (layer) {
-          addGeoJSONLayer(result.data, `land-${part}`, layer.color, layer.visible);
-        }
-      } else if (result.error) {
-        // Log error but don't show it to user for optional land parts
-        console.warn(`Land part ${part} not found for ${selectedState} ${selectedDistrict} ${selectedVillage}:`, result.error);
-      }
-    }
-  };
 
   // Handle state selection
   const handleStateChange = useCallback(async (state: string) => {
@@ -658,7 +621,6 @@ const Maps: React.FC = () => {
                 <div className="text-xs text-blue-700 space-y-1">
                   <div>• Administrative: State/District/Village boundaries</div>
                   <div>• Forest Areas: Forest ranges and blocks</div>
-                  <div>• Land Parts: Village land divisions (1-10)</div>
                 </div>
               </div>
             </div>

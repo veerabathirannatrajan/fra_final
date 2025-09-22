@@ -11,6 +11,7 @@ import Analytics from './pages/Analytics';
 import DSS from './pages/DSS';
 import Upload from './pages/Upload';
 import Profile from './pages/Profile';
+import WebGISHeader from './components/Layout/WebGISHeader';
 
 // Protected Route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -31,6 +32,30 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return (
     <>
       <Header />
+      <main>{children}</main>
+    </>
+  );
+};
+
+// WebGIS Route component (special layout for maps page)
+const WebGISRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return (
+    <>
+      <WebGISHeader />
       <main>{children}</main>
     </>
   );
@@ -116,9 +141,9 @@ function App() {
             <Route 
               path="/maps" 
               element={
-                <ProtectedRoute>
+                <WebGISRoute>
                   <Maps />
-                </ProtectedRoute>
+                </WebGISRoute>
               } 
             />
             
