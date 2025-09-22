@@ -212,8 +212,9 @@ const DSS: React.FC = () => {
                 stackId="2"
                 stroke="#10B981"
                 fill="#10B981"
-    let primaryScheme = '';
+                fillOpacity={0.3}
               />
+            </AreaChart>
           </ResponsiveContainer>
         );
 
