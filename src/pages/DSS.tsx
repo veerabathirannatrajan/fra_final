@@ -1,257 +1,212 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useFRAForms } from '../hooks/useFRAForms';
 import { 
   CpuChipIcon, 
   LightBulbIcon,
-  ChartBarIcon,
-  DocumentTextIcon,
-  CalculatorIcon,
-  AdjustmentsHorizontalIcon
+  UserIcon,
+  BuildingOfficeIcon,
+  MapIcon,
+  MagnifyingGlassIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  LineChart,
-  Line,
-  Area,
-  AreaChart
-} from 'recharts';
 
 const DSS: React.FC = () => {
-  const [selectedScenario, setSelectedScenario] = useState('resource-allocation');
-  const [analysisType, setAnalysisType] = useState('optimization');
-  const [timeHorizon, setTimeHorizon] = useState('1year');
+  const { individualForms, villageForms, forestForms, loading, error } = useFRAForms();
+  const [selectedClaimType, setSelectedClaimType] = useState<'individual' | 'village' | 'forest'>('individual');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClaim, setSelectedClaim] = useState<any>(null);
 
-  // Mock DSS data
-  const resourceAllocationData = [
-    { resource: 'Education', current: 25, optimal: 35, gap: -10 },
-    { resource: 'Healthcare', current: 20, optimal: 28, gap: -8 },
-    { resource: 'Infrastructure', current: 30, optimal: 25, gap: 5 },
-    { resource: 'Agriculture', current: 15, optimal: 20, gap: -5 },
-    { resource: 'Forest Conservation', current: 10, optimal: 15, gap: -5 },
-  ];
-
-  const impactAnalysisData = [
-    { factor: 'Economic Impact', current: 65, projected: 85, target: 90 },
-    { factor: 'Social Welfare', current: 70, projected: 82, target: 95 },
-    { factor: 'Environmental', current: 55, projected: 75, target: 80 },
-    { factor: 'Infrastructure', current: 60, projected: 78, target: 85 },
-    { factor: 'Education Access', current: 45, projected: 70, target: 90 },
-    { factor: 'Healthcare Access', current: 50, projected: 68, target: 85 },
-  ];
-
-  const budgetOptimizationData = [
-    { month: 'Q1', allocated: 2500, utilized: 2200, efficiency: 88 },
-    { month: 'Q2', allocated: 3000, utilized: 2850, efficiency: 95 },
-    { month: 'Q3', allocated: 2800, utilized: 2520, efficiency: 90 },
-    { month: 'Q4', allocated: 3200, utilized: 3040, efficiency: 95 },
-  ];
-
-  const riskAssessmentData = [
-    { category: 'Land Disputes', probability: 25, impact: 70, risk: 'Medium' },
-    { category: 'Environmental Degradation', probability: 40, impact: 85, risk: 'High' },
-    { category: 'Budget Constraints', probability: 60, impact: 60, risk: 'High' },
-    { category: 'Policy Changes', probability: 30, impact: 50, risk: 'Low' },
-    { category: 'Community Resistance', probability: 20, impact: 40, risk: 'Low' },
-  ];
-
-  const scenarios = [
-    { id: 'resource-allocation', name: 'Resource Allocation Optimization', icon: CalculatorIcon },
-    { id: 'impact-analysis', name: 'Policy Impact Analysis', icon: ChartBarIcon },
-    { id: 'budget-planning', name: 'Budget Planning & Forecasting', icon: DocumentTextIcon },
-    { id: 'risk-assessment', name: 'Risk Assessment & Mitigation', icon: LightBulbIcon },
-  ];
-
-  const recommendations = {
-    'resource-allocation': [
-      'Increase education budget allocation by 40% to meet optimal targets',
-      'Reallocate 5% from infrastructure to healthcare for better balance',
-      'Focus on forest conservation programs with additional 50% funding',
-      'Implement community-based resource management strategies'
-    ],
-    'impact-analysis': [
-      'Projected 30% improvement in economic indicators with current policies',
-      'Social welfare programs show positive trend but need 25% budget increase',
-      'Environmental initiatives require immediate action for target achievement',
-      'Infrastructure development on track with current allocation'
-    ],
-    'budget-planning': [
-      'Maintain current utilization efficiency above 90% across all quarters',
-      'Consider seasonal budget adjustments for Q3 to improve efficiency',
-      'Implement real-time budget monitoring for better resource utilization',
-      'Plan for 15% budget increase in Q4 for year-end initiatives'
-    ],
-    'risk-assessment': [
-      'High priority: Address environmental degradation risks immediately',
-      'Medium priority: Develop land dispute resolution mechanisms',
-      'Monitor budget constraints and develop contingency plans',
-      'Engage communities early to prevent resistance to new policies'
-    ]
-  };
-
-  const renderChart = () => {
-    switch (selectedScenario) {
-      case 'resource-allocation':
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={resourceAllocationData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="resource" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 11, fill: '#6B7280' }}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: '#6B7280' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-              <Bar dataKey="current" fill="#3B82F6" name="Current Allocation" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="optimal" fill="#10B981" name="Optimal Allocation" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        );
-
-      case 'impact-analysis':
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <RadarChart data={impactAnalysisData}>
-              <PolarGrid />
-              <PolarAngleAxis 
-                dataKey="factor" 
-                tick={{ fontSize: 10, fill: '#6B7280' }}
-              />
-              <PolarRadiusAxis 
-                domain={[0, 100]} 
-                tick={false} 
-                axisLine={false} 
-              />
-              <Radar
-                name="Current"
-                dataKey="current"
-                stroke="#3B82F6"
-                fill="#3B82F6"
-                fillOpacity={0.2}
-                strokeWidth={2}
-              />
-              <Radar
-                name="Projected"
-                dataKey="projected"
-                stroke="#10B981"
-                fill="#10B981"
-                fillOpacity={0.2}
-                strokeWidth={2}
-              />
-              <Radar
-                name="Target"
-                dataKey="target"
-                stroke="#F59E0B"
-                fill="#F59E0B"
-                fillOpacity={0.1}
-                strokeWidth={2}
-              />
-              <Tooltip />
-            </RadarChart>
-          </ResponsiveContainer>
-        );
-
-      case 'budget-planning':
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={budgetOptimizationData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="month" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: '#6B7280' }}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: '#6B7280' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="allocated"
-                stackId="1"
-                stroke="#3B82F6"
-                fill="#3B82F6"
-                fillOpacity={0.3}
-              />
-              <Area
-                type="monotone"
-                dataKey="utilized"
-                stackId="2"
-                stroke="#10B981"
-                fill="#10B981"
-                fillOpacity={0.3}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        );
-
+  // Get current data based on selected type
+  const getCurrentData = () => {
+    switch (selectedClaimType) {
+      case 'individual':
+        return individualForms;
+      case 'village':
+        return villageForms;
+      case 'forest':
+        return forestForms;
       default:
-        return (
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={riskAssessmentData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="category" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 10, fill: '#6B7280' }}
-                angle={-45}
-                textAnchor="end"
-                height={100}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: '#6B7280' }}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                }}
-              />
-              <Bar dataKey="probability" fill="#F59E0B" name="Probability %" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="impact" fill="#EF4444" name="Impact %" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        );
+        return [];
     }
   };
+
+  // Filter data based on search term
+  const getFilteredData = () => {
+    const data = getCurrentData();
+    if (!searchTerm) return data;
+    
+    return data.filter(item => 
+      item.claimant_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.claim_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.village?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.district?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  // Enhanced eligibility checking with unique reasons
+  const checkEligibilityWithReasons = (claim: any, type: string) => {
+    const schemes = [];
+    const reasons = [];
+
+    if (type === 'individual') {
+      // PM-KISAN eligibility with detailed reasoning
+      if (claim.area && claim.area > 1.0 && claim.income && claim.income <= 200000) {
+        schemes.push({
+          name: 'PM-KISAN',
+          priority: 1,
+          reason: `Eligible for PM-KISAN as you own ${claim.area} acres of cultivable land (requirement: >1.0 acre) and your annual income of ₹${claim.income?.toLocaleString()} is within the limit of ₹2,00,000. This scheme provides ₹6,000 per year in three installments directly to your bank account.`,
+          benefits: '₹6,000 annual income support, Direct bank transfer, No middleman involvement',
+          nextSteps: 'Visit nearest Common Service Center with Aadhaar, land documents, and bank details'
+        });
+      }
+
+      // Jal Jeevan Mission eligibility
+      if (claim.status === 'Pending' || !claim.forest_near || claim.forest_near.toLowerCase().includes('water')) {
+        schemes.push({
+          name: 'Jal Jeevan Mission',
+          priority: 2,
+          reason: `Recommended for Jal Jeevan Mission based on your current status (${claim.status}) indicating potential lack of proper water connection. This mission ensures 'Har Ghar Jal' - functional household tap connection to every rural household.`,
+          benefits: 'Piped water supply, 55 liters per person per day, Quality assured water',
+          nextSteps: 'Contact Village Water & Sanitation Committee or Gram Panchayat for enrollment'
+        });
+      }
+
+      // MGNREGA eligibility
+      if (claim.income && claim.income <= 120000) {
+        schemes.push({
+          name: 'MGNREGA',
+          priority: 3,
+          reason: `Eligible for MGNREGA as your annual income of ₹${claim.income?.toLocaleString()} is below ₹1,20,000, indicating need for additional livelihood support. This scheme guarantees 100 days of wage employment per household per year.`,
+          benefits: '100 days guaranteed employment, ₹309 per day wage (varies by state), Asset creation in village',
+          nextSteps: 'Apply for job card at Gram Panchayat with household details and photographs'
+        });
+      }
+    }
+
+    if (type === 'village') {
+      // Jal Jeevan Mission for villages
+      if (claim.resources_rights && claim.resources_rights.toLowerCase().includes('water')) {
+        schemes.push({
+          name: 'Jal Jeevan Mission',
+          priority: 1,
+          reason: `Your village has established water resource rights (${claim.resources_rights}), making it ideal for Jal Jeevan Mission implementation. This will ensure piped water supply to all households in ${claim.village} village.`,
+          benefits: 'Village-wide piped water supply, Community water management, Improved health outcomes',
+          nextSteps: 'Village Water & Sanitation Committee should prepare detailed project proposal'
+        });
+      }
+
+      // MGNREGA for village development
+      if (claim.status === 'Pending' || claim.status === 'Unemployed') {
+        schemes.push({
+          name: 'MGNREGA',
+          priority: 2,
+          reason: `Village status shows ${claim.status}, indicating need for employment generation and rural development. MGNREGA can create sustainable livelihood opportunities while building village infrastructure.`,
+          benefits: 'Village infrastructure development, Employment generation, Skill development',
+          nextSteps: 'Gram Panchayat should prepare annual action plan and submit to Block office'
+        });
+      }
+
+      // DAJGUA for village development
+      schemes.push({
+        name: 'DAJGUA',
+        priority: 3,
+        reason: `As a village-level claimant in ${claim.district} district, your community can benefit from DAJGUA schemes for integrated tribal development, focusing on education, health, and livelihood enhancement.`,
+        benefits: 'Integrated development approach, Education & health facilities, Livelihood enhancement',
+        nextSteps: 'Contact District Collector office for DAJGUA scheme enrollment and project proposal'
+      });
+    }
+
+    if (type === 'forest') {
+      // DAJGUA for forest communities
+      if (claim.status === 'Approved') {
+        schemes.push({
+          name: 'DAJGUA',
+          priority: 1,
+          reason: `Your forest rights claim is approved (Status: ${claim.status}) for ${claim.forest} forest area. DAJGUA provides comprehensive support for forest-dependent communities with focus on sustainable forest management and livelihood diversification.`,
+          benefits: 'Forest conservation support, Alternative livelihood options, Community development',
+          nextSteps: 'Contact Tribal Welfare Department with approved forest rights certificate'
+        });
+      }
+
+      // Jal Jeevan Mission for forest communities
+      if (claim.resource && claim.resource.toLowerCase().includes('water')) {
+        schemes.push({
+          name: 'Jal Jeevan Mission',
+          priority: 2,
+          reason: `Your community has rights over water resources (${claim.resource}) in the forest area. Jal Jeevan Mission can provide sustainable water supply solutions for forest-dependent communities.`,
+          benefits: 'Sustainable water supply, Community-managed systems, Forest conservation alignment',
+          nextSteps: 'Coordinate with Forest Department and Village Water Committee for implementation'
+        });
+      }
+
+      // MGNREGA for forest area development
+      schemes.push({
+        name: 'MGNREGA',
+        priority: 3,
+        reason: `Forest communities often need additional livelihood support. MGNREGA can provide employment in forest conservation activities, watershed management, and eco-restoration work in ${claim.forest} area.`,
+        benefits: 'Forest conservation employment, Watershed development, Eco-restoration work',
+        nextSteps: 'Register with local Gram Panchayat and request forest-related MGNREGA work'
+      });
+    }
+
+    // Sort by priority and return top recommendation
+    schemes.sort((a, b) => a.priority - b.priority);
+    return schemes.length > 0 ? schemes[0] : null;
+  };
+
+  const claimTypes = [
+    { id: 'individual', name: 'Individual Claims', icon: UserIcon, count: individualForms.length },
+    { id: 'village', name: 'Village Claims', icon: BuildingOfficeIcon, count: villageForms.length },
+    { id: 'forest', name: 'Forest Claims', icon: MapIcon, count: forestForms.length },
+  ];
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved': return 'text-green-600 bg-green-50 border-green-200';
+      case 'pending': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      case 'rejected': return 'text-red-600 bg-red-50 border-red-200';
+      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved': return <CheckCircleIcon className="h-4 w-4" />;
+      case 'pending': return <ClockIcon className="h-4 w-4" />;
+      case 'rejected': return <XCircleIcon className="h-4 w-4" />;
+      default: return <ClockIcon className="h-4 w-4" />;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading FRA claims data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">Error loading data: {error}</div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -266,191 +221,262 @@ const DSS: React.FC = () => {
             <CpuChipIcon className="h-8 w-8 text-blue-600 mr-3" />
             <div>
               <h1 className="text-3xl font-bold text-gray-900">FRA Decision Support System</h1>
-              <p className="text-gray-600 mt-1">AI-powered CSS scheme layering and targeted development recommendations</p>
+              <p className="text-gray-600 mt-1">AI-powered CSS scheme recommendations for FRA claimants</p>
             </div>
-          </div>
-        </motion.div>
-
-        {/* Scenario Selection */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8"
-        >
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Analysis Scenarios</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {scenarios.map((scenario) => {
-              const Icon = scenario.icon;
-              return (
-                <button
-                  key={scenario.id}
-                  onClick={() => setSelectedScenario(scenario.id)}
-                  className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
-                    selectedScenario === scenario.id
-                      ? 'border-blue-500 bg-blue-50 shadow-md'
-                      : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                  }`}
-                >
-                  <Icon className={`h-6 w-6 mb-3 ${
-                    selectedScenario === scenario.id ? 'text-blue-600' : 'text-gray-600'
-                  }`} />
-                  <div className={`text-sm font-medium ${
-                    selectedScenario === scenario.id ? 'text-blue-900' : 'text-gray-900'
-                  }`}>
-                    {scenario.name}
-                  </div>
-                </button>
-              );
-            })}
           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Analysis Controls */}
+          {/* Left Panel - Claim Selection */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-1"
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-1 space-y-6"
           >
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-8">
-              <div className="flex items-center mb-6">
-                <AdjustmentsHorizontalIcon className="h-5 w-5 text-gray-600 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">Analysis Parameters</h3>
+            {/* Claim Type Selection */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Claim Type</h3>
+              <div className="space-y-3">
+                {claimTypes.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <button
+                      key={type.id}
+                      onClick={() => {
+                        setSelectedClaimType(type.id as any);
+                        setSelectedClaim(null);
+                        setSearchTerm('');
+                      }}
+                      className={`w-full flex items-center justify-between p-4 rounded-lg border-2 transition-all duration-200 ${
+                        selectedClaimType === type.id
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <Icon className={`h-5 w-5 mr-3 ${
+                          selectedClaimType === type.id ? 'text-blue-600' : 'text-gray-600'
+                        }`} />
+                        <span className={`font-medium ${
+                          selectedClaimType === type.id ? 'text-blue-900' : 'text-gray-900'
+                        }`}>
+                          {type.name}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        selectedClaimType === type.id 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {type.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+            </div>
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Analysis Type</label>
-                  <select
-                    value={analysisType}
-                    onChange={(e) => setAnalysisType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="optimization">Optimization</option>
-                    <option value="forecasting">Forecasting</option>
-                    <option value="scenario">Scenario Planning</option>
-                    <option value="sensitivity">Sensitivity Analysis</option>
-                  </select>
-                </div>
+            {/* Search */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Search Claims</h3>
+              <div className="relative">
+                <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search by name, ID, village..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Time Horizon</label>
-                  <select
-                    value={timeHorizon}
-                    onChange={(e) => setTimeHorizon(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="6months">6 Months</option>
-                    <option value="1year">1 Year</option>
-                    <option value="2years">2 Years</option>
-                    <option value="5years">5 Years</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Confidence Level</label>
-                  <input
-                    type="range"
-                    min="80"
-                    max="99"
-                    defaultValue="95"
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>80%</span>
-                    <span>95%</span>
-                    <span>99%</span>
+            {/* Claims List */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {claimTypes.find(t => t.id === selectedClaimType)?.name}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {getFilteredData().length} claims found
+                </p>
+              </div>
+              
+              <div className="max-h-96 overflow-y-auto">
+                {getFilteredData().length === 0 ? (
+                  <div className="p-8 text-center text-gray-500">
+                    <div className="text-gray-300 mb-2">No claims found</div>
+                    <div className="text-sm">Try adjusting your search terms</div>
                   </div>
-                </div>
-
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors">
-                  Run Analysis
-                </button>
-
-                <button className="w-full border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
-                  Export Results
-                </button>
+                ) : (
+                  <div className="divide-y divide-gray-100">
+                    {getFilteredData().map((claim, index) => (
+                      <button
+                        key={claim.claim_id}
+                        onClick={() => setSelectedClaim(claim)}
+                        className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
+                          selectedClaim?.claim_id === claim.claim_id ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{claim.claimant_name}</h4>
+                            <p className="text-sm text-gray-600 mt-1">ID: {claim.claim_id}</p>
+                            <p className="text-sm text-gray-500">
+                              {claim.village && `${claim.village}, `}
+                              {claim.district && `${claim.district}, `}
+                              {claim.state}
+                            </p>
+                          </div>
+                          <div className="ml-3">
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(claim.status)}`}>
+                              {getStatusIcon(claim.status)}
+                              <span className="ml-1">{claim.status || 'Unknown'}</span>
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>
 
-          {/* Main Analysis Area */}
+          {/* Right Panel - Recommendation */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="lg:col-span-2 space-y-8"
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-2"
           >
-            {/* Chart Area */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">
-                {scenarios.find(s => s.id === selectedScenario)?.name}
-              </h3>
-              <div className="h-80">
-                {renderChart()}
-              </div>
-            </div>
-
-            {/* Recommendations */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center mb-6">
-                <LightBulbIcon className="h-6 w-6 text-yellow-500 mr-2" />
-                <h3 className="text-lg font-semibold text-gray-900">AI Recommendations</h3>
-              </div>
-              
-              <div className="space-y-4">
-                {recommendations[selectedScenario as keyof typeof recommendations]?.map((rec, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                    className="flex items-start p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg"
-                  >
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-medium mr-3 mt-0.5">
-                      {index + 1}
+            {selectedClaim ? (
+              <div className="space-y-6">
+                {/* Claim Details */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Claim Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Claimant Name</label>
+                      <p className="text-gray-900 font-medium">{selectedClaim.claimant_name}</p>
                     </div>
-                    <p className="text-gray-700 leading-relaxed">{rec}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Key Insights */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Key Insights</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">87%</div>
-                  <div className="text-sm text-gray-600">Optimization Potential</div>
-                </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">₹12.5M</div>
-                  <div className="text-sm text-gray-600">Potential Savings</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">6 Mo</div>
-                  <div className="text-sm text-gray-600">Implementation Time</div>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-start">
-                  <svg className="h-5 w-5 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
-                  <div>
-                    <h4 className="font-medium text-yellow-800">Critical Action Required</h4>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Environmental degradation risks require immediate attention. Consider implementing emergency conservation measures within the next 30 days.
-                    </p>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Claim ID</label>
+                      <p className="text-gray-900 font-medium">{selectedClaim.claim_id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Village</label>
+                      <p className="text-gray-900">{selectedClaim.village || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">District</label>
+                      <p className="text-gray-900">{selectedClaim.district || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">State</label>
+                      <p className="text-gray-900">{selectedClaim.state || 'Not specified'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Status</label>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedClaim.status)}`}>
+                        {getStatusIcon(selectedClaim.status)}
+                        <span className="ml-1">{selectedClaim.status || 'Unknown'}</span>
+                      </span>
+                    </div>
+                    {selectedClaim.area && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Land Area</label>
+                        <p className="text-gray-900">{selectedClaim.area} acres</p>
+                      </div>
+                    )}
+                    {selectedClaim.income && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Annual Income</label>
+                        <p className="text-gray-900">₹{selectedClaim.income.toLocaleString()}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Scheme Recommendation */}
+                {(() => {
+                  const recommendation = checkEligibilityWithReasons(selectedClaim, selectedClaimType);
+                  
+                  if (!recommendation) {
+                    return (
+                      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <div className="text-center py-8">
+                          <XCircleIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Eligible Schemes Found</h3>
+                          <p className="text-gray-600">
+                            Based on the current claim details, no CSS schemes match the eligibility criteria. 
+                            Please verify the claim information or contact the local administration for guidance.
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                      <div className="flex items-center mb-6">
+                        <LightBulbIcon className="h-6 w-6 text-yellow-500 mr-2" />
+                        <h3 className="text-lg font-semibold text-gray-900">Recommended Scheme</h3>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                        <div className="flex items-center mb-4">
+                          <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-lg mr-4">
+                            {recommendation.name.charAt(0)}
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-bold text-blue-900">{recommendation.name}</h4>
+                            <p className="text-blue-700 text-sm">Primary Recommendation</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-4">
+                          <div>
+                            <h5 className="font-semibold text-gray-900 mb-2">Why This Scheme?</h5>
+                            <p className="text-gray-700 leading-relaxed">{recommendation.reason}</p>
+                          </div>
+
+                          <div>
+                            <h5 className="font-semibold text-gray-900 mb-2">Key Benefits</h5>
+                            <p className="text-gray-700">{recommendation.benefits}</p>
+                          </div>
+
+                          <div>
+                            <h5 className="font-semibold text-gray-900 mb-2">Next Steps</h5>
+                            <p className="text-gray-700">{recommendation.nextSteps}</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 pt-4 border-t border-blue-200">
+                          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            Get Application Form
+                          </button>
+                          <button className="ml-3 border border-blue-600 text-blue-600 hover:bg-blue-50 font-medium py-2 px-6 rounded-lg transition-colors">
+                            Contact Support
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="text-center py-12">
+                  <CpuChipIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Select a Claim for Analysis</h3>
+                  <p className="text-gray-600">
+                    Choose a claim from the left panel to get personalized CSS scheme recommendations
+                  </p>
+                </div>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>
