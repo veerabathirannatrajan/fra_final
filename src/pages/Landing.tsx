@@ -59,11 +59,9 @@ const Landing: React.FC = () => {
         <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <MapIcon className="h-6 w-6 text-white" />
-              </div>
+              <span className="text-3xl">🌍</span>
               <span className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                TribalGIS
+                FRA Atlas
               </span>
             </div>
             
@@ -221,9 +219,7 @@ const Landing: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                <MapIcon className="h-5 w-5 text-white" />
-              </div>
+              <span className="text-2xl">🌍</span>
               <span className="text-xl font-semibold">FRA Atlas</span>
             </div>
             <div className="text-gray-400 text-sm">

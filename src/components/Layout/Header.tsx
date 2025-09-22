@@ -43,9 +43,7 @@ const Header: React.FC = () => {
         <div className="flex w-full items-center justify-between py-4">
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center space-x-2 group">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center group-hover:from-blue-600 group-hover:to-blue-700 transition-all duration-200">
-                <MapIcon className="h-5 w-5 text-white" />
-              </div>
+              <span className="text-2xl">🌍</span>
               <span className="text-xl font-semibold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 FRA Atlas
               </span>
