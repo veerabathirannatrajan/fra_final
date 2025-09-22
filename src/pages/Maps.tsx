@@ -319,7 +319,6 @@ const Maps: React.FC = () => {
       const result = await fetchGeoJSON(path);
       if (result.data) {
         setGeoJsonData(result.data);
-        addGeoJSONLayer(data, 'administrative', '#3B82F6');
         addGeoJSONLayer(result.data, 'administrative', '#3B82F6');
         
         // Fit bounds to the data
