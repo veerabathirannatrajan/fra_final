@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useFRAForms } from '../hooks/useFRAForms';
 import { 
   ChartBarIcon, 
   AdjustmentsHorizontalIcon,
   ArrowDownTrayIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  DocumentCheckIcon,
+  UserGroupIcon,
+  BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 import {
   AreaChart,
@@ -29,9 +33,15 @@ import {
 } from 'recharts';
 
 const Analytics: React.FC = () => {
+  const { loading: formsLoading, error: formsError, getAllRecommendations, getAnalytics } = useFRAForms();
   const [timeRange, setTimeRange] = useState('6months');
   const [selectedState, setSelectedState] = useState('all');
   const [selectedMetric, setSelectedMetric] = useState('parcels');
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Get FRA analytics data
+  const fraAnalytics = getAnalytics();
+  const recommendations = getAllRecommendations();
 
   // Mock analytics data
   const timeSeriesData = [
@@ -80,6 +90,55 @@ const Analytics: React.FC = () => {
     alert('Analytics data exported successfully!');
   };
 
+  // Convert FRA analytics to chart data
+  const claimTypeData = [
+    { name: 'Individual Claims', value: fraAnalytics.claimsByType.Individual, color: '#3B82F6' },
+    { name: 'Village Claims', value: fraAnalytics.claimsByType.Village, color: '#10B981' },
+    { name: 'Forest Claims', value: fraAnalytics.claimsByType.Forest, color: '#F59E0B' },
+  ];
+
+  const schemeEligibilityData = [
+    { scheme: 'PM-KISAN', eligible: fraAnalytics.schemeEligibility['PM-KISAN'] },
+    { scheme: 'Jal Jeevan Mission', eligible: fraAnalytics.schemeEligibility['Jal Jeevan Mission'] },
+    { scheme: 'MGNREGA', eligible: fraAnalytics.schemeEligibility['MGNREGA'] },
+    { scheme: 'DAJGUA', eligible: fraAnalytics.schemeEligibility['DAJGUA'] },
+  ];
+
+  const stateWiseData = Object.entries(fraAnalytics.stateDistribution).map(([state, count]) => ({
+    state,
+    claims: count
+  }));
+
+  const statusData = Object.entries(fraAnalytics.statusSummary).map(([status, count]) => ({
+    name: status,
+    value: count,
+    color: status === 'Approved' ? '#10B981' : status === 'Pending' ? '#F59E0B' : '#EF4444'
+  }));
+
+  if (formsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (formsError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-600 mb-4">Error loading FRA data: {formsError}</div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -91,10 +150,32 @@ const Analytics: React.FC = () => {
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">FRA Analytics Dashboard</h1>
-              <p className="text-gray-600">Comprehensive insights on Forest Rights Act implementation and progress tracking</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">FRA Eligibility & Analytics Dashboard</h1>
+              <p className="text-gray-600">Comprehensive insights on FRA claims and CSS scheme eligibility recommendations</p>
             </div>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'overview' 
+                      ? 'bg-white text-blue-600 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab('eligibility')}
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === 'eligibility' 
+                      ? 'bg-white text-blue-600 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Eligibility
+                </button>
+              </div>
               <button
                 onClick={exportData}
                 className="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
@@ -106,150 +187,207 @@ const Analytics: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8"
-        >
-          <div className="flex items-center mb-4">
-            <AdjustmentsHorizontalIcon className="h-5 w-5 text-gray-600 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Analytics Filters</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Time Range</label>
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="3months">Last 3 Months</option>
-                <option value="6months">Last 6 Months</option>
-                <option value="1year">Last Year</option>
-                <option value="all">All Time</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">State</label>
-              <select
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="all">All States</option>
-                <option value="odisha">Odisha</option>
-                <option value="jharkhand">Jharkhand</option>
-                <option value="chhattisgarh">Chhattisgarh</option>
-                <option value="westbengal">West Bengal</option>
-                <option value="andhrapradesh">Andhra Pradesh</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Primary Metric</label>
-              <select
-                value={selectedMetric}
-                onChange={(e) => setSelectedMetric(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="parcels">Land Parcels</option>
-                <option value="area">Total Area</option>
-                <option value="files">File Uploads</option>
-                <option value="completion">Completion Rate</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-              <div className="relative">
-                <CalendarDaysIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="date"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Key Metrics Cards */}
+        {/* FRA Claims Overview */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8"
         >
-          {[
-            { label: 'Total Land Parcels', value: '4,000', change: '+12.5%', color: 'blue' },
-            { label: 'Area Documented (Ha)', value: '15,650', change: '+8.3%', color: 'green' },
-            { label: 'Files Processed', value: '1,248', change: '+15.7%', color: 'purple' },
-            { label: 'Completion Rate', value: '87.4%', change: '+3.2%', color: 'orange' },
-          ].map((metric, index) => (
-            <div key={index} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 bg-gradient-to-r from-${metric.color}-500 to-${metric.color}-600 rounded-xl flex items-center justify-center`}>
-                  <ChartBarIcon className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-sm font-medium text-green-600">{metric.change}</span>
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                <DocumentCheckIcon className="h-6 w-6 text-white" />
               </div>
-              <div className="text-2xl font-bold text-gray-900 mb-1">{metric.value}</div>
-              <div className="text-sm text-gray-600">{metric.label}</div>
             </div>
-          ))}
+            <div className="text-2xl font-bold text-gray-900 mb-1">{fraAnalytics.claimsByType.Total}</div>
+            <div className="text-sm text-gray-600">Total FRA Claims</div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                <UserGroupIcon className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 mb-1">{fraAnalytics.claimsByType.Individual}</div>
+            <div className="text-sm text-gray-600">Individual Claims</div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <BuildingOfficeIcon className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 mb-1">{fraAnalytics.claimsByType.Village}</div>
+            <div className="text-sm text-gray-600">Village Claims</div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                <ChartBarIcon className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-gray-900 mb-1">{fraAnalytics.claimsByType.Forest}</div>
+            <div className="text-sm text-gray-600">Forest Claims</div>
+          </div>
         </motion.div>
 
-        {/* Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Time Series Chart */}
+        {activeTab === 'overview' && (
+          <>
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Claim Type Distribution */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">FRA Claim Type Distribution</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={claimTypeData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {claimTypeData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+
+              {/* Scheme Eligibility */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">CSS Scheme Eligibility</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={schemeEligibilityData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis 
+                        dataKey="scheme" 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 11, fill: '#6B7280' }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={100}
+                      />
+                      <YAxis 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Bar dataKey="eligible" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+
+              {/* State-wise Distribution */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">State-wise Claim Distribution</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stateWiseData} layout="horizontal">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis type="number" hide />
+                      <YAxis 
+                        type="category" 
+                        dataKey="state"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                      <Bar dataKey="claims" fill="#10B981" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+
+              {/* Status Summary */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+              >
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Claim Status Summary</h3>
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={statusData}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {statusData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+            </div>
+          </>
+        )}
+
+        {activeTab === 'eligibility' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+            className="bg-white rounded-2xl shadow-sm border border-gray-100"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Land Parcel Growth Trend</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={timeSeriesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="parcels"
-                    stroke="#3B82F6"
-                    fill="url(#colorParcels)"
-                    strokeWidth={2}
-                  />
-                  <defs>
-                    <linearGradient id="colorParcels" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">FRA Claim Eligibility Recommendations</h3>
+                <div className="text-sm text-gray-600">
+                  {recommendations.length} claims analyzed
+                </div>
+              </div>
             </div>
           </motion.div>
 
@@ -284,35 +422,65 @@ const Analytics: React.FC = () => {
                   <Bar dataKey="parcels" fill="#3B82F6" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
           </motion.div>
+            <div className="max-h-96 overflow-y-auto">
+              <div className="divide-y divide-gray-100">
+                {recommendations.slice(0, 20).map((rec, index) => (
+                  <div key={rec.claim_id} className="p-6 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h4 className="text-sm font-semibold text-gray-900">{rec.claimant_name}</h4>
+                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                            {rec.claim_type}
+                          </span>
+                          <span className="text-xs text-gray-500">ID: {rec.claim_id}</span>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600 mb-3">
+                          {rec.village && `${rec.village}, `}{rec.district && `${rec.district}, `}{rec.state}
+                          {rec.status && (
+                            <span className={`ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                              rec.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                              rec.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {rec.status}
+                            </span>
+                          )}
+                        </div>
 
-          {/* Land Type Distribution */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Land Type Distribution</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={landTypeDistribution}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    dataKey="value"
-                    label={({ type, percent }) => `${type} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {landTypeDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+                        {rec.recommended_schemes.length > 0 ? (
+                          <div>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              {rec.recommended_schemes.map((scheme, idx) => (
+                                <span key={idx} className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-800">
+                                  {scheme}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {rec.eligibility_reasons.join(' • ')}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500 italic">
+                            No eligible schemes found
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {recommendations.length > 20 && (
+                <div className="p-4 text-center border-t border-gray-100">
+                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    View All {recommendations.length} Recommendations
+                  </button>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -343,86 +511,7 @@ const Analytics: React.FC = () => {
                     stroke="#3B82F6"
                     fill="#3B82F6"
                     fillOpacity={0.2}
-                    strokeWidth={2}
-                  />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Trends Analysis */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Multi-Metric Trends</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={trendsData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="month" 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <YAxis 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="documentation" 
-                  stroke="#3B82F6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#3B82F6', strokeWidth: 0, r: 4 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="approvals" 
-                  stroke="#10B981" 
-                  strokeWidth={3}
-                  dot={{ fill: '#10B981', strokeWidth: 0, r: 4 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="disputes" 
-                  stroke="#F59E0B" 
-                  strokeWidth={3}
-                  dot={{ fill: '#F59E0B', strokeWidth: 0, r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <div className="mt-6 flex items-center justify-center space-x-8">
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-              <span className="text-sm text-gray-600">Documentation Rate</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-              <span className="text-sm text-gray-600">Approvals</span>
-            </div>
-            <div className="flex items-center">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full mr-2"></div>
-              <span className="text-sm text-gray-600">Disputes</span>
-            </div>
-          </div>
-        </motion.div>
+        )}
       </div>
     </div>
   );
