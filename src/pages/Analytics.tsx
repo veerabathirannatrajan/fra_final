@@ -375,142 +375,82 @@ const Analytics: React.FC = () => {
         )}
 
         {activeTab === 'eligibility' && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-2xl shadow-sm border border-gray-100"
-          >
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">FRA Claim Eligibility Recommendations</h3>
-                <div className="text-sm text-gray-600">
-                  {recommendations.length} claims analyzed
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white rounded-2xl shadow-sm border border-gray-100"
+            >
+              <div className="p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">FRA Claim Eligibility Recommendations</h3>
+                  <div className="text-sm text-gray-600">
+                    {recommendations.length} claims analyzed
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-
-          {/* State Comparison */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">State-wise Comparison</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stateComparisonData} layout="horizontal">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis type="number" hide />
-                  <YAxis 
-                    type="category" 
-                    dataKey="state"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Bar dataKey="parcels" fill="#3B82F6" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-          </motion.div>
-            <div className="max-h-96 overflow-y-auto">
-              <div className="divide-y divide-gray-100">
-                {recommendations.slice(0, 20).map((rec, index) => (
-                  <div key={rec.claim_id} className="p-6 hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h4 className="text-sm font-semibold text-gray-900">{rec.claimant_name}</h4>
-                          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                            {rec.claim_type}
-                          </span>
-                          <span className="text-xs text-gray-500">ID: {rec.claim_id}</span>
-                        </div>
-                        
-                        <div className="text-sm text-gray-600 mb-3">
-                          {rec.village && `${rec.village}, `}{rec.district && `${rec.district}, `}{rec.state}
-                          {rec.status && (
-                            <span className={`ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                              rec.status === 'Approved' ? 'bg-green-100 text-green-800' :
-                              rec.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {rec.status}
+              <div className="max-h-96 overflow-y-auto">
+                <div className="divide-y divide-gray-100">
+                  {recommendations.slice(0, 20).map((rec, index) => (
+                    <div key={rec.claim_id} className="p-6 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h4 className="text-sm font-semibold text-gray-900">{rec.claimant_name}</h4>
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                              {rec.claim_type}
                             </span>
+                            <span className="text-xs text-gray-500">ID: {rec.claim_id}</span>
+                          </div>
+                          
+                          <div className="text-sm text-gray-600 mb-3">
+                            {rec.village && `${rec.village}, `}{rec.district && `${rec.district}, `}{rec.state}
+                            {rec.status && (
+                              <span className={`ml-2 inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                rec.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                                rec.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {rec.status}
+                              </span>
+                            )}
+                          </div>
+
+                          {rec.recommended_schemes.length > 0 ? (
+                            <div>
+                              <div className="flex flex-wrap gap-2 mb-2">
+                                {rec.recommended_schemes.map((scheme, idx) => (
+                                  <span key={idx} className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-800">
+                                    {scheme}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {rec.eligibility_reasons.join(' • ')}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500 italic">
+                              No eligible schemes found
+                            </div>
                           )}
                         </div>
-
-                        {rec.recommended_schemes.length > 0 ? (
-                          <div>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                              {rec.recommended_schemes.map((scheme, idx) => (
-                                <span key={idx} className="inline-flex px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-800">
-                                  {scheme}
-                                </span>
-                              ))}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {rec.eligibility_reasons.join(' • ')}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-sm text-gray-500 italic">
-                            No eligible schemes found
-                          </div>
-                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-              
-              {recommendations.length > 20 && (
-                <div className="p-4 text-center border-t border-gray-100">
-                  <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    View All {recommendations.length} Recommendations
-                  </button>
+                  ))}
                 </div>
-              )}
-            </div>
-          </motion.div>
-
-          {/* Efficiency Metrics */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Performance Metrics</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={efficiencyMetrics}>
-                  <PolarGrid />
-                  <PolarAngleAxis 
-                    dataKey="metric" 
-                    tick={{ fontSize: 10, fill: '#6B7280' }}
-                  />
-                  <PolarRadiusAxis 
-                    domain={[0, 100]} 
-                    tick={false} 
-                    axisLine={false} 
-                  />
-                  <Radar
-                    name="Performance"
-                    dataKey="value"
-                    stroke="#3B82F6"
-                    fill="#3B82F6"
-                    fillOpacity={0.2}
+                
+                {recommendations.length > 20 && (
+                  <div className="p-4 text-center border-t border-gray-100">
+                    <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                      View All {recommendations.length} Recommendations
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
         )}
       </div>
     </div>
