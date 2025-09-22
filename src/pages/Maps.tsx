@@ -55,12 +55,16 @@ const Maps: React.FC = () => {
   const [layers, setLayers] = useState<LayerConfig[]>([
     { id: 'administrative', name: 'Administrative Boundary', color: '#3B82F6', visible: true, type: 'administrative' },
     { id: 'forest', name: 'Forest Areas', color: '#10B981', visible: true, type: 'forest' },
-    { id: 'ifr', name: 'IFR Areas', color: '#DC2626', visible: false, type: 'asset' },
-    { id: 'cr', name: 'CR Areas', color: '#7C3AED', visible: false, type: 'asset' },
-    { id: 'cfr', name: 'CFR Areas', color: '#059669', visible: false, type: 'asset' },
-    { id: 'agriculture', name: 'Agriculture', color: '#65A30D', visible: false, type: 'asset' },
-    { id: 'water', name: 'Water Bodies', color: '#0891B2', visible: false, type: 'asset' },
-    { id: 'homestead', name: 'Homesteads', color: '#EA580C', visible: false, type: 'asset' },
+    { id: 'land-1', name: 'Land Part 1', color: '#FF6B6B', visible: false, type: 'land' },
+    { id: 'land-2', name: 'Land Part 2', color: '#4ECDC4', visible: false, type: 'land' },
+    { id: 'land-3', name: 'Land Part 3', color: '#45B7D1', visible: false, type: 'land' },
+    { id: 'land-4', name: 'Land Part 4', color: '#96CEB4', visible: false, type: 'land' },
+    { id: 'land-5', name: 'Land Part 5', color: '#FFEAA7', visible: false, type: 'land' },
+    { id: 'land-6', name: 'Land Part 6', color: '#DDA0DD', visible: false, type: 'land' },
+    { id: 'land-7', name: 'Land Part 7', color: '#98D8C8', visible: false, type: 'land' },
+    { id: 'land-8', name: 'Land Part 8', color: '#F7DC6F', visible: false, type: 'land' },
+    { id: 'land-9', name: 'Land Part 9', color: '#BB8FCE', visible: false, type: 'land' },
+    { id: 'land-10', name: 'Land Part 10', color: '#85C1E9', visible: false, type: 'land' },
   ]);
 
   const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -323,30 +327,27 @@ const Maps: React.FC = () => {
 
   // Load asset layers when administrative boundary is loaded
   useEffect(() => {
-    if (geoJsonData && map.current && mapLoaded) {
-      // Get center coordinates from current data
-      let centerCoords: [number, number] = [78.9629, 20.5937];
-      
-      if (geoJsonData.features && geoJsonData.features.length > 0) {
-        const firstFeature = geoJsonData.features[0];
-        if (firstFeature.geometry.type === 'Polygon') {
-          const coords = firstFeature.geometry.coordinates[0][0];
-          centerCoords = [coords[0], coords[1]];
+    if (selectedState && selectedDistrict && selectedVillage && map.current && mapLoaded) {
+      // Load land parts when village is selected
+      loadLandParts();
+    }
+  }, [selectedState, selectedDistrict, selectedVillage, mapLoaded]);
+
+  // Load land parts from storage
+  const loadLandParts = async () => {
+    if (!selectedState || !selectedDistrict || !selectedVillage) return;
+    
+    for (let part = 1; part <= 10; part++) {
+      const path = `LAND/${selectedState} ${selectedDistrict} ${selectedVillage} ${part}.geojson`;
+      const data = await fetchGeoJSON(path);
+      if (data) {
+        const layer = layers.find(l => l.id === `land-${part}`);
+        if (layer) {
+          addGeoJSONLayer(data, `land-${part}`, layer.color, layer.visible);
         }
       }
-      
-      // Generate and add asset layers
-      const assetTypes = ['ifr', 'cr', 'cfr', 'agriculture', 'water', 'homestead'];
-      
-      assetTypes.forEach(assetType => {
-        const layer = layers.find(l => l.id === assetType);
-        if (layer) {
-          const assetData = generateAssetData(assetType, centerCoords);
-          addGeoJSONLayer(assetData, assetType, layer.color, layer.visible);
-        }
-      });
     }
-  }, [geoJsonData, mapLoaded, generateAssetData, addGeoJSONLayer, layers]);
+  };
 
   // Handle state selection
   const handleStateChange = useCallback(async (state: string) => {
@@ -631,14 +632,11 @@ const Maps: React.FC = () => {
               </div>
               
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">Asset Types:</h4>
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Layer Types:</h4>
                 <div className="text-xs text-blue-700 space-y-1">
-                  <div>• IFR: Individual Forest Rights</div>
-                  <div>• CR: Community Rights</div>
-                  <div>• CFR: Community Forest Resources</div>
-                  <div>• Agriculture: Cultivated lands</div>
-                  <div>• Water Bodies: Rivers, lakes, ponds</div>
-                  <div>• Homesteads: Residential areas</div>
+                  <div>• Administrative: State/District/Village boundaries</div>
+                  <div>• Forest Areas: Forest ranges and blocks</div>
+                  <div>• Land Parts: Village land divisions (1-10)</div>
                 </div>
               </div>
             </div>
