@@ -221,9 +221,8 @@ class OCRProcessor {
     extractedData.district = this.extractFieldValue(text, 'district');
     extractedData.state = this.extractFieldValue(text, 'state');
     
-    // Set status based on form title
-    const mapping = this.formMappings[tableName as keyof FormMappings];
-    extractedData.status = mapping.status_mapping[formTitle] || 'Unknown';
+    // Set status to Pending for all new uploads
+    extractedData.status = 'Pending';
     
     // Table-specific fields
     if (tableName === 'individual_forms') {

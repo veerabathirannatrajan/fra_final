@@ -315,15 +315,18 @@ const Analytics: React.FC = () => {
                 transition={{ delay: 0.5 }}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">State-wise Claim Distribution</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Monthly Claim Trends</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={stateWiseData} layout="horizontal">
+                    <LineChart data={trendsData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                      <XAxis type="number" hide />
+                      <XAxis 
+                        dataKey="month"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fontSize: 12, fill: '#6B7280' }}
+                      />
                       <YAxis 
-                        type="category" 
-                        dataKey="state"
                         axisLine={false}
                         tickLine={false}
                         tick={{ fontSize: 12, fill: '#6B7280' }}
@@ -336,7 +339,9 @@ const Analytics: React.FC = () => {
                           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                         }}
                       />
-                      <Bar dataKey="claims" fill="#10B981" radius={[0, 4, 4, 0]} />
+                      <Line type="monotone" dataKey="documentation" stroke="#3B82F6" strokeWidth={3} />
+                      <Line type="monotone" dataKey="approvals" stroke="#10B981" strokeWidth={3} />
+                      <Line type="monotone" dataKey="disputes" stroke="#EF4444" strokeWidth={3} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -349,24 +354,27 @@ const Analytics: React.FC = () => {
                 transition={{ delay: 0.6 }}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
               >
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Claim Status Summary</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Processing Efficiency Metrics</h3>
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
+                    <RadarChart data={efficiencyMetrics}>
+                      <PolarGrid />
+                      <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10 }} />
+                      <PolarRadiusAxis 
+                        angle={90} 
+                        domain={[0, 100]} 
+                        tick={{ fontSize: 10 }}
+                      />
+                      <Radar
+                        name="Efficiency"
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {statusData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
+                        stroke="#3B82F6"
+                        fill="#3B82F6"
+                        fillOpacity={0.3}
+                        strokeWidth={2}
+                      />
                       <Tooltip />
-                    </PieChart>
+                    </RadarChart>
                   </ResponsiveContainer>
                 </div>
               </motion.div>
