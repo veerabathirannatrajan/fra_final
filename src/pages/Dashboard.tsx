@@ -8,25 +8,13 @@ import {
   UserGroupIcon,
   MapPinIcon,
   FolderIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
 
 const Dashboard: React.FC = () => {
-  const [loading, setLoading] = useState(true);
   const { 
     individualForms, 
     villageForms, 
@@ -39,10 +27,6 @@ const Dashboard: React.FC = () => {
 
   const [analytics, setAnalytics] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
-  const [claimTypeData, setClaimTypeData] = useState<any[]>([]);
-  const [stateData, setStateData] = useState<any[]>([]);
-  const [schemeEligibilityData, setSchemeEligibilityData] = useState<any[]>([]);
 
   useEffect(() => {
     if (!formsLoading && !formsError) {
@@ -50,85 +34,45 @@ const Dashboard: React.FC = () => {
       const recommendationsData = getAllRecommendations();
       setAnalytics(analyticsData);
       setRecommendations(recommendationsData);
-      
-      // Generate static chart data based on current analytics
-      const baseChartData = [
-        { month: 'Jan', individual: Math.floor(analyticsData.claimsByType.Individual * 0.7), village: Math.floor(analyticsData.claimsByType.Village * 0.6), forest: Math.floor(analyticsData.claimsByType.Forest * 0.5) },
-        { month: 'Feb', individual: Math.floor(analyticsData.claimsByType.Individual * 0.75), village: Math.floor(analyticsData.claimsByType.Village * 0.7), forest: Math.floor(analyticsData.claimsByType.Forest * 0.6) },
-        { month: 'Mar', individual: Math.floor(analyticsData.claimsByType.Individual * 0.8), village: Math.floor(analyticsData.claimsByType.Village * 0.75), forest: Math.floor(analyticsData.claimsByType.Forest * 0.7) },
-        { month: 'Apr', individual: Math.floor(analyticsData.claimsByType.Individual * 0.85), village: Math.floor(analyticsData.claimsByType.Village * 0.8), forest: Math.floor(analyticsData.claimsByType.Forest * 0.8) },
-        { month: 'May', individual: Math.floor(analyticsData.claimsByType.Individual * 0.9), village: Math.floor(analyticsData.claimsByType.Village * 0.9), forest: Math.floor(analyticsData.claimsByType.Forest * 0.9) },
-        { month: 'Jun', individual: analyticsData.claimsByType.Individual, village: analyticsData.claimsByType.Village, forest: analyticsData.claimsByType.Forest },
-      ];
-      setChartData(baseChartData);
-
-      const baseClaimTypeData = [
-        { name: 'Individual Claims', value: analyticsData.claimsByType.Individual, color: '#10B981' },
-        { name: 'Village Claims', value: analyticsData.claimsByType.Village, color: '#F59E0B' },
-        { name: 'Forest Claims', value: analyticsData.claimsByType.Forest, color: '#3B82F6' },
-      ];
-      setClaimTypeData(baseClaimTypeData);
-
-      const baseStateData = Object.entries(analyticsData.stateDistribution).map(([state, claims]) => ({
-        state,
-        claims: claims as number,
-        progress: Math.min(100, ((claims as number) / Math.max(...Object.values(analyticsData.stateDistribution))) * 100)
-      })).slice(0, 5);
-      setStateData(baseStateData);
-
-      const baseSchemeEligibilityData = [
-        { scheme: 'PM-KISAN', eligible: analyticsData.schemeEligibility['PM-KISAN'], color: '#10B981' },
-        { scheme: 'Jal Jeevan Mission', eligible: analyticsData.schemeEligibility['Jal Jeevan Mission'], color: '#3B82F6' },
-        { scheme: 'MGNREGA', eligible: analyticsData.schemeEligibility['MGNREGA'], color: '#F59E0B' },
-        { scheme: 'DAJGUA', eligible: analyticsData.schemeEligibility['DAJGUA'], color: '#8B5CF6' },
-      ];
-      setSchemeEligibilityData(baseSchemeEligibilityData);
-      
-      setLoading(false);
     }
   }, [formsLoading, formsError, getAnalytics, getAllRecommendations]);
 
+  // Static overview stats without changing numbers
   const overviewStats = [
     { 
       icon: DocumentTextIcon, 
       label: 'FRA Claims', 
-      value: analytics?.claimsByType?.Total?.toLocaleString() || '0', 
-      change: `+${Math.floor(Math.random() * 100)}`, 
+      value: analytics?.claimsByType?.Total || 0,
       color: 'blue' 
     },
     { 
       icon: UserGroupIcon, 
       label: 'Individual Claims', 
-      value: analytics?.claimsByType?.Individual?.toLocaleString() || '0', 
-      change: `+${Math.floor(Math.random() * 50)}`, 
+      value: analytics?.claimsByType?.Individual || 0,
       color: 'green' 
     },
     { 
       icon: BuildingOfficeIcon, 
       label: 'Village Claims', 
-      value: analytics?.claimsByType?.Village?.toLocaleString() || '0', 
-      change: `+${Math.floor(Math.random() * 30)}`, 
+      value: analytics?.claimsByType?.Village || 0,
       color: 'purple' 
     },
     { 
       icon: MapPinIcon, 
       label: 'Forest Claims', 
-      value: analytics?.claimsByType?.Forest?.toLocaleString() || '0', 
-      change: `+${Math.floor(Math.random() * 20)}`, 
+      value: analytics?.claimsByType?.Forest || 0,
       color: 'orange' 
     },
     { 
       icon: FolderIcon, 
       label: 'PM-KISAN Eligible', 
-      value: analytics?.schemeEligibility?.['PM-KISAN']?.toLocaleString() || '0', 
-      change: `+${Math.floor(Math.random() * 40)}`, 
+      value: analytics?.schemeEligibility?.['PM-KISAN'] || 0,
       color: 'red' 
     },
     { 
       icon: ChartBarIcon, 
       label: 'MGNREGA Eligible', 
-      value: analytics?.schemeEligibility?.['MGNREGA']?.toLocaleString() || '0', 
-      change: `+${Math.floor(Math.random() * 35)}`, 
+      value: analytics?.schemeEligibility?.['MGNREGA'] || 0,
       color: 'indigo' 
     },
   ];
@@ -145,7 +89,29 @@ const Dashboard: React.FC = () => {
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
-  if (loading || formsLoading) {
+  const getStatusIcon = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved':
+        return <CheckCircleIcon className="h-4 w-4 text-green-600" />;
+      case 'pending':
+        return <ClockIcon className="h-4 w-4 text-yellow-600" />;
+      case 'rejected':
+        return <XCircleIcon className="h-4 w-4 text-red-600" />;
+      default:
+        return <ClockIcon className="h-4 w-4 text-gray-600" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (formsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -190,7 +156,7 @@ const Dashboard: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* Overview Stats */}
+        {/* Overview Stats - Fixed Numbers */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {overviewStats.map((stat, index) => (
             <motion.div
@@ -206,7 +172,6 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                  <div className="text-sm text-green-600 font-medium">{stat.change}</div>
                 </div>
               </div>
               <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
@@ -214,162 +179,225 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* Charts Section */}
+        {/* Recent Claims Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Area Chart */}
+          {/* Recent Individual Claims */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
             className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">FRA Claims Progress Over Time</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis 
-                    dataKey="month" 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                  />
-                  <YAxis 
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: '#6B7280' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#fff',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="individual"
-                    stroke="#3B82F6"
-                    fill="url(#colorIndividual)"
-                    strokeWidth={2}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="village"
-                    stroke="#10B981"
-                    fill="url(#colorVillage)"
-                    strokeWidth={2}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="forest"
-                    stroke="#F59E0B"
-                    fill="url(#colorForest)"
-                    strokeWidth={2}
-                  />
-                  <defs>
-                    <linearGradient id="colorIndividual" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorVillage" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="colorForest" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#F59E0B" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                </AreaChart>
-              </ResponsiveContainer>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Individual Claims</h3>
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {individualForms.slice(0, 5).map((claim, index) => (
+                <div key={claim.claim_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{claim.claimant_name}</h4>
+                    <p className="text-sm text-gray-600">ID: {claim.claim_id}</p>
+                    <p className="text-xs text-gray-500">
+                      {claim.village && `${claim.village}, `}
+                      {claim.district && `${claim.district}, `}
+                      {claim.state}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {claim.area && (
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                        {claim.area} acres
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(claim.status)}`}>
+                      {getStatusIcon(claim.status)}
+                      <span className="ml-1">{claim.status || 'Unknown'}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {individualForms.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <DocumentTextIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>No individual claims found</p>
+                </div>
+              )}
             </div>
           </motion.div>
 
-          {/* Pie Chart */}
+          {/* Recent Village Claims */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
             className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">FRA Claim Type Distribution</h3>
-            <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={claimTypeData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {claimTypeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Village Claims</h3>
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {villageForms.slice(0, 5).map((claim, index) => (
+                <div key={claim.claim_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{claim.claimant_name}</h4>
+                    <p className="text-sm text-gray-600">ID: {claim.claim_id}</p>
+                    <p className="text-xs text-gray-500">
+                      {claim.village && `${claim.village}, `}
+                      {claim.district && `${claim.district}, `}
+                      {claim.state}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {claim.resources_rights && (
+                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                        Resources
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(claim.status)}`}>
+                      {getStatusIcon(claim.status)}
+                      <span className="ml-1">{claim.status || 'Unknown'}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {villageForms.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <BuildingOfficeIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>No village claims found</p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
 
-        {/* CSS Scheme Eligibility Chart */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8"
-        >
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">CSS Scheme Eligibility Analysis</h3>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={schemeEligibilityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="scheme" 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <YAxis 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 12, fill: '#6B7280' }}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar dataKey="eligible" fill="#3B82F6" radius={[4, 4, 0, 0]}>
-                  {schemeEligibilityData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </motion.div>
+        {/* Forest Claims and Scheme Recommendations */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Recent Forest Claims */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Forest Claims</h3>
+            <div className="space-y-4 max-h-80 overflow-y-auto">
+              {forestForms.slice(0, 5).map((claim, index) => (
+                <div key={claim.claim_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900">{claim.claimant_name}</h4>
+                    <p className="text-sm text-gray-600">ID: {claim.claim_id}</p>
+                    <p className="text-xs text-gray-500">
+                      {claim.forest && `${claim.forest}, `}
+                      {claim.district && `${claim.district}, `}
+                      {claim.state}
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {claim.resource && (
+                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                        {claim.resource.substring(0, 10)}...
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(claim.status)}`}>
+                      {getStatusIcon(claim.status)}
+                      <span className="ml-1">{claim.status || 'Unknown'}</span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+              {forestForms.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <MapPinIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>No forest claims found</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
 
-        {/* State-wise Data Table */}
+          {/* CSS Scheme Eligibility Summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          >
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">CSS Scheme Eligibility Summary</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3">
+                    P
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">PM-KISAN</h4>
+                    <p className="text-sm text-gray-600">Agricultural support scheme</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-blue-600">{analytics?.schemeEligibility?.['PM-KISAN'] || 0}</div>
+                  <div className="text-xs text-gray-500">eligible</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-green-600 text-white rounded-full flex items-center justify-center font-bold mr-3">
+                    J
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">Jal Jeevan Mission</h4>
+                    <p className="text-sm text-gray-600">Water supply scheme</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-green-600">{analytics?.schemeEligibility?.['Jal Jeevan Mission'] || 0}</div>
+                  <div className="text-xs text-gray-500">eligible</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-orange-600 text-white rounded-full flex items-center justify-center font-bold mr-3">
+                    M
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">MGNREGA</h4>
+                    <p className="text-sm text-gray-600">Employment guarantee scheme</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-orange-600">{analytics?.schemeEligibility?.['MGNREGA'] || 0}</div>
+                  <div className="text-xs text-gray-500">eligible</div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold mr-3">
+                    D
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">DAJGUA</h4>
+                    <p className="text-sm text-gray-600">Tribal development scheme</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-purple-600">{analytics?.schemeEligibility?.['DAJGUA'] || 0}</div>
+                  <div className="text-xs text-gray-500">eligible</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* State-wise Distribution Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
+          transition={{ delay: 0.7 }}
+          className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-8"
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900">State-wise FRA Claims Distribution</h3>
-            <button className="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors">
-              View All States
-            </button>
+            <div className="text-sm text-gray-600">
+              {Object.keys(analytics?.stateDistribution || {}).length} states
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -377,34 +405,52 @@ const Dashboard: React.FC = () => {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">State</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">FRA Claims</th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Progress</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Total Claims</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Individual</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Village</th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-600">Forest</th>
                 </tr>
               </thead>
               <tbody>
-                {stateData.map((state, index) => (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="py-4 px-4">
-                      <div className="font-medium text-gray-900">{state.state}</div>
-                    </td>
-                    <td className="py-4 px-4 text-gray-600">{state.claims.toLocaleString()}</td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2 mr-3">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${state.progress}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-gray-600 min-w-0">
-                          {Math.round(state.progress)}%
+                {Object.entries(analytics?.stateDistribution || {}).map(([state, total], index) => {
+                  const individualCount = individualForms.filter(f => f.state === state).length;
+                  const villageCount = villageForms.filter(f => f.state === state).length;
+                  const forestCount = forestForms.filter(f => f.state === state).length;
+                  
+                  return (
+                    <tr key={state} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                      <td className="py-4 px-4">
+                        <div className="font-medium text-gray-900">{state}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="text-lg font-semibold text-gray-900">{total as number}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          {individualCount}
                         </span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          {villageCount}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="inline-flex px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                          {forestCount}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
+            {Object.keys(analytics?.stateDistribution || {}).length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <ChartBarIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <p>No state data available</p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -412,23 +458,35 @@ const Dashboard: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4"
+          transition={{ delay: 0.8 }}
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
         >
-          <button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
-            <MapIcon className="h-6 w-6 mb-2" />
-            <div className="text-sm font-medium">Open Maps</div>
+          <button 
+            onClick={() => window.location.href = '/maps'}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <MapIcon className="h-6 w-6 mb-2 mx-auto" />
+            <div className="text-sm font-medium">Open WebGIS</div>
           </button>
-          <button className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl">
-            <ChartBarIcon className="h-6 w-6 mb-2" />
+          <button 
+            onClick={() => window.location.href = '/analytics'}
+            className="bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-xl hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <ChartBarIcon className="h-6 w-6 mb-2 mx-auto" />
             <div className="text-sm font-medium">View Analytics</div>
           </button>
-          <button className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl">
-            <DocumentTextIcon className="h-6 w-6 mb-2" />
+          <button 
+            onClick={() => window.location.href = '/dss'}
+            className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-4 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <DocumentTextIcon className="h-6 w-6 mb-2 mx-auto" />
             <div className="text-sm font-medium">Decision Support</div>
           </button>
-          <button className="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-4 rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all duration-200 shadow-lg hover:shadow-xl">
-            <FolderIcon className="h-6 w-6 mb-2" />
+          <button 
+            onClick={() => window.location.href = '/upload'}
+            className="bg-gradient-to-r from-orange-600 to-orange-700 text-white p-4 rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all duration-200 shadow-lg hover:shadow-xl"
+          >
+            <FolderIcon className="h-6 w-6 mb-2 mx-auto" />
             <div className="text-sm font-medium">Upload Files</div>
           </button>
         </motion.div>
