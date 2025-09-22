@@ -46,10 +46,10 @@ const Landing: React.FC = () => {
   ];
 
   const stats = [
-    { label: 'FRA Claims Digitized', value: '50K+' },
-    { label: 'Villages Mapped', value: '2,500+' },
-    { label: 'Pattas Processed', value: '15K+' },
-    { label: 'Asset Maps Generated', value: '1,200+' },
+    { label: 'FRA Claims Digitized', value: '1K+' },
+    { label: 'Villages Mapped', value: '200+' },
+    { label: 'Pattas Processed', value: '1K+' },
+    { label: 'Asset Maps Generated', value: '200+' },
   ];
 
   return (
@@ -190,11 +190,11 @@ const Landing: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              Ready to Transform Forest Rights Management?
+              Transform Forest Rights Management with FRA Atlas
             </h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Join Ministry of Tribal Affairs and district departments using FRA Atlas for 
-              comprehensive forest rights documentation and AI-powered decision support.
+              Comprehensive forest rights documentation and AI-powered decision support 
+              for Ministry of Tribal Affairs and district departments.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
