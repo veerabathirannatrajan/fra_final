@@ -1,14 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { supabase } from '../lib/supabase';
+import WaterBodyDetector from '../lib/waterbodyDetector';
 import { 
   MapIcon, 
   AdjustmentsHorizontalIcon,
   RectangleStackIcon,
   EyeIcon,
-  EyeSlashIcon
+  EyeSlashIcon,
+  MagnifyingGlassIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 
 interface GeoJSONData {
@@ -32,6 +35,9 @@ const Maps: React.FC = () => {
   const [selectedForest, setSelectedForest] = useState('');
   const [activeLayer, setActiveLayer] = useState('satellite');
   const [loading, setLoading] = useState(false);
+  const [detectingWaterBodies, setDetectingWaterBodies] = useState(false);
+  const [waterBodiesData, setWaterBodiesData] = useState<any>(null);
+  const [showWaterBodies, setShowWaterBodies] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Geographic data
@@ -50,11 +56,13 @@ const Maps: React.FC = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
+  const waterBodyDetector = useRef(new WaterBodyDetector());
 
   // Layer configurations
   const [layers, setLayers] = useState<LayerConfig[]>([
     { id: 'administrative', name: 'Administrative Boundary', color: '#3B82F6', visible: true, type: 'administrative' },
     { id: 'forest', name: 'Forest Areas', color: '#10B981', visible: true, type: 'forest' },
+    { id: 'water_bodies', name: 'Detected Water Bodies', color: '#06B6D4', visible: true, type: 'administrative' },
   ]);
 
   const mapboxToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -384,6 +392,69 @@ const Maps: React.FC = () => {
     setLoading(false);
   }, [selectedState, fetchGeoJSON, addGeoJSONLayer]);
 
+  // Detect water bodies for selected village
+  const detectWaterBodies = useCallback(async () => {
+    if (!selectedState || !selectedDistrict || !selectedVillage || !geoJsonData) {
+      alert('Please select a village first to detect water bodies');
+      return;
+    }
+
+    setDetectingWaterBodies(true);
+    setError(null);
+
+    try {
+      console.log('🔍 Detecting water bodies for village:', selectedVillage);
+      
+      // Create village GeoJSON from current data
+      const villageGeoJSON = {
+        type: 'Feature',
+        geometry: geoJsonData.features[0]?.geometry || geoJsonData.geometry,
+        properties: {
+          name: selectedVillage,
+          state: selectedState,
+          district: selectedDistrict
+        }
+      };
+
+      const result = await waterBodyDetector.current.detectWaterBodies(villageGeoJSON, 16);
+      
+      console.log('✅ Water body detection completed:', result);
+      setWaterBodiesData(result);
+      setShowWaterBodies(true);
+
+      // Add water bodies to map
+      if (result.blue_polygons_count > 0) {
+        const waterBodiesGeoJSON = {
+          type: 'FeatureCollection',
+          features: result.blue_polygons.map(wb => wb.geojson)
+        };
+        
+        addGeoJSONLayer(waterBodiesGeoJSON, 'water_bodies', '#06B6D4', true);
+        
+        // Fit map to show water bodies
+        if (map.current && waterBodiesGeoJSON.features.length > 0) {
+          const bounds = new mapboxgl.LngLatBounds();
+          waterBodiesGeoJSON.features.forEach((feature: any) => {
+            if (feature.geometry.type === 'Polygon') {
+              feature.geometry.coordinates[0].forEach((coord: number[]) => {
+                bounds.extend([coord[0], coord[1]]);
+              });
+            }
+          });
+          if (!bounds.isEmpty()) {
+            map.current.fitBounds(bounds, { padding: 100 });
+          }
+        }
+      }
+
+    } catch (error) {
+      console.error('❌ Water body detection failed:', error);
+      setError(`Water body detection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setDetectingWaterBodies(false);
+    }
+  }, [selectedState, selectedDistrict, selectedVillage, geoJsonData, addGeoJSONLayer]);
+
   // Handle village selection
   const handleVillageChange = useCallback(async (village: string) => {
     setLoading(true);
@@ -482,6 +553,8 @@ const Maps: React.FC = () => {
     setSelectedForest('');
     setGeoJsonData(null);
     setForestData(null);
+    setWaterBodiesData(null);
+    setShowWaterBodies(false);
     
     // Reset map view
     if (map.current) {
@@ -590,7 +663,7 @@ const Maps: React.FC = () => {
 
             {/* Layer Controls */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Asset Mapping Layers</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Map Layers</h3>
               <div className="space-y-3">
                 {layers.map((layer) => (
                   <div key={layer.id} className="flex items-center justify-between">
@@ -616,11 +689,89 @@ const Maps: React.FC = () => {
               </div>
               
               <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">Layer Types:</h4>
+                <h4 className="text-sm font-medium text-blue-900 mb-2">Available Layers:</h4>
                 <div className="text-xs text-blue-700 space-y-1">
                   <div>• Administrative: State/District/Village boundaries</div>
                   <div>• Forest Areas: Forest ranges and blocks</div>
+                  <div>• Water Bodies: AI-detected water features</div>
                 </div>
+              </div>
+            </div>
+
+            {/* Water Body Detection */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">🔍 Water Body Detection</h3>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border border-cyan-200">
+                  <h4 className="text-sm font-medium text-cyan-900 mb-2">AI-Powered Detection</h4>
+                  <p className="text-xs text-cyan-700 mb-3">
+                    Automatically detect rivers, ponds, and water bodies within selected village boundaries using satellite imagery analysis.
+                  </p>
+                  
+                  <button
+                    onClick={detectWaterBodies}
+                    disabled={detectingWaterBodies || !selectedVillage}
+                    className={`w-full flex items-center justify-center px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      detectingWaterBodies || !selectedVillage
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : 'bg-cyan-600 hover:bg-cyan-700 text-white shadow-md hover:shadow-lg'
+                    }`}
+                  >
+                    {detectingWaterBodies ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Detecting Water Bodies...
+                      </>
+                    ) : (
+                      <>
+                        <MagnifyingGlassIcon className="h-4 w-4 mr-2" />
+                        Detect Water Bodies
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {!selectedVillage && (
+                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-700">
+                      ⚠️ Please select a village first to enable water body detection
+                    </p>
+                  </div>
+                )}
+
+                {waterBodiesData && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-green-50 border border-green-200 rounded-lg"
+                  >
+                    <h4 className="text-sm font-medium text-green-900 mb-2">✅ Detection Results</h4>
+                    <div className="space-y-2 text-xs text-green-700">
+                      <div>Village: <span className="font-medium">{waterBodiesData.village_info.name}</span></div>
+                      <div>Water Bodies Found: <span className="font-medium">{waterBodiesData.blue_polygons_count}</span></div>
+                      <div>Total Water Area: <span className="font-medium">{waterBodiesData.analysis.total_blue_area.toFixed(6)} sq units</span></div>
+                    </div>
+                    
+                    {waterBodiesData.blue_polygons_count > 0 && (
+                      <div className="mt-3 pt-3 border-t border-green-200">
+                        <h5 className="text-xs font-medium text-green-900 mb-2">Detected Features:</h5>
+                        <div className="space-y-1">
+                          {waterBodiesData.blue_polygons.slice(0, 3).map((wb: any, index: number) => (
+                            <div key={index} className="text-xs text-green-600">
+                              • Water Body {wb.id}: {wb.area_pixels} pixels
+                            </div>
+                          ))}
+                          {waterBodiesData.blue_polygons.length > 3 && (
+                            <div className="text-xs text-green-600">
+                              • ... and {waterBodiesData.blue_polygons.length - 3} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
               </div>
             </div>
 
@@ -687,6 +838,7 @@ const Maps: React.FC = () => {
                         {!selectedState && <p>Select a state to begin mapping</p>}
                         {geoJsonData && <p><strong>Data loaded:</strong> {geoJsonData.features.length} features</p>}
                         {forestData && <p><strong>Forest data:</strong> {forestData.features.length} features</p>}
+                        {waterBodiesData && <p><strong>Water bodies:</strong> {waterBodiesData.blue_polygons_count} detected</p>}
                       </div>
                     </div>
                   </>
@@ -697,7 +849,7 @@ const Maps: React.FC = () => {
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">FRA Asset Mapping</h3>
                       {!mapboxToken || mapboxToken === 'your_mapbox_access_token_here' ? (
                         <p className="text-sm text-gray-500">
-                          Please add your Mapbox API key to .env file as VITE_MAPBOX_ACCESS_TOKEN
+                          Please configure Mapbox API key to enable mapping
                         </p>
                       ) : (
                         <p className="text-sm text-gray-500">
@@ -711,6 +863,96 @@ const Maps: React.FC = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Water Body Detection Results Modal */}
+        <AnimatePresence>
+          {showWaterBodies && waterBodiesData && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+              onClick={() => setShowWaterBodies(false)}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900">🌊 Water Body Detection Results</h3>
+                  <button
+                    onClick={() => setShowWaterBodies(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Summary */}
+                  <div className="bg-gradient-to-r from-cyan-50 to-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-3">Detection Summary</h4>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600">Village:</span>
+                        <div className="font-medium">{waterBodiesData.village_info.name}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Water Bodies Found:</span>
+                        <div className="font-medium text-cyan-600">{waterBodiesData.blue_polygons_count}</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Total Area:</span>
+                        <div className="font-medium">{waterBodiesData.analysis.total_blue_area.toFixed(8)} sq units</div>
+                      </div>
+                      <div>
+                        <span className="text-gray-600">Detection Method:</span>
+                        <div className="font-medium">Satellite Analysis</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Individual Water Bodies */}
+                  {waterBodiesData.blue_polygons_count > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-3">Detected Water Bodies</h4>
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                        {waterBodiesData.blue_polygons.map((wb: any, index: number) => (
+                          <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                            <div className="flex items-center justify-between mb-2">
+                              <h5 className="font-medium text-gray-900">Water Body {wb.id}</h5>
+                              <span className="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full">
+                                {wb.area_pixels} pixels
+                              </span>
+                            </div>
+                            <div className="text-xs text-gray-600 space-y-1">
+                              <div>Center: {wb.center_coordinates[1].toFixed(6)}, {wb.center_coordinates[0].toFixed(6)}</div>
+                              <div>Area: {wb.bbox_area.toFixed(8)} sq units</div>
+                              <div>Status: Within village boundary</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {waterBodiesData.blue_polygons_count === 0 && (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400 mb-2">No water bodies detected</div>
+                      <div className="text-sm text-gray-500">
+                        This could mean the village has no significant water features,
+                        or they may be too small to detect at the current resolution.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
